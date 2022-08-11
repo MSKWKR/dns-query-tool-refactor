@@ -11,7 +11,8 @@ import dns.resolver
 import dns.reversename
 import re
 import sqlite3
-import datetime
+from datetime import datetime, timezone
+import pytz
 from sqlite3 import Error
 
 
@@ -430,13 +431,7 @@ def search(request):
                 return "correct"
         except Exception:
             return "none"
-
-    def time():
-        now = datetime.datetime.now()
-        print(now.strftime("%Y-%m-%d %H:%M:%S"))
-        return now.strftime("%Y-%m-%d %H:%M:%S")
-
-
+    time = datetime.now(pytz.timezone("Asia/Taipei"))
     main()
     context = {
         "domain": domain,
@@ -465,7 +460,7 @@ def search(request):
         "mail_search": mail_search("search"),
         "www": www_check(),
         "wans": "http://www."+domain,
-        "time": time(),
+        "time": time.strftime('%Y/%m/%d %H:%M:%S'),
         "mode": 1,
 
     }
@@ -538,3 +533,4 @@ def nsdetails(request):
         "check": quicktest(),
     }
     return HttpResponse(template.render(context, request))
+
