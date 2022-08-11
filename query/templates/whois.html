@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://kit.fontawesome.com/9c938b3d7b.js" crossorigin="anonymous"></script>
+    <title>Dnsquery/whoisdetails</title>
+</head>
+<style>
+    body {
+        background-color: #1a1a1a;
+        text-align: center;
+        font-family: 'Trebuchet MS', sans-serif;
+        font-size: 24px;
+       }
+</style>
+<body>
+<h2 style="color:#4dff4d">Whois record:</h2>
+<p style="color:white; text-align: left">{{ whoistxt }}</p>
+<h2 style="color:#4dff4d">NS record:</h2>
+{% for num in ns %}<p style="color:white">{{ num }}</p>{% endfor %}
+<h2 style="color:#4dff4d">Method:</h2>
+<p style="color:white">Check if NS record matches "name_servers" in Whois record</p>
+{% if check == "error" %}
+<p style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> Whois record missing:{{ missing }}</p>
+<p style="color:gold"><i class="fa-solid fa-lightbulb fa-bounce"></i> Solution: Please update Whois record to match NS records</p>
+<br>
+{% elif check == "correct" %}
+<p style="color:gold">Whois record correct</p>
+{% endif %}
+</body>
+</html>

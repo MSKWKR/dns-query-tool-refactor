@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://kit.fontawesome.com/9c938b3d7b.js" crossorigin="anonymous"></script>
+    <title>Dnsquery/nsdetails</title>
+</head>
+<style>
+    body {
+        background-color: #1a1a1a;
+        text-align: center;
+        font-family: 'Trebuchet MS', sans-serif;
+        font-size: 24px;
+       }
+</style>
+<body>
+<h2 style="color:#4dff4d">NS IP:</h2>
+{% for num in ip %}
+<p style="color:white; font-size:24px">{{ num }}</p>
+{% endfor %}
+<h2 style="color:#4dff4d">Method:</h2>
+<p style="color:white">Check if different NS are nested in same IP (eg: 127.0.0.1 and 127.0.0.0 are nested in same IP)</p>
+{% if check == "error" %}
+<p style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> IP duplicates:{{ duplicates }}</p>
+<p style="color:gold"><i class="fa-solid fa-lightbulb fa-bounce"></i> Solution: Please change IP of NS</p>
+<br>
+{% elif check == "correct" %}
+<p style="color:gold">NS IP correct</p>
+{% endif %}
+<br>
+</body>
+</html>

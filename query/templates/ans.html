@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://kit.fontawesome.com/9c938b3d7b.js" crossorigin="anonymous"></script>
+    <title>Dnsquery/answer</title>
+    <script>
+    function myFunction() {
+    var element = document.body;
+    element.classList.toggle("light-mode");
+    }
+    </script>
+</head>
+<style>
+    body {
+        background-color:#1a1a1a;
+        color:white;
+        text-align: center;
+        font-family: 'Trebuchet MS', sans-serif;
+        font-size: 20px;
+       }
+    .light-mode {
+        background-color: #e1e1ea;
+        color: black;
+        }
+    h2 {
+        color: #4dff4d;
+       }
+</style>
+<body>
+<b style="color:#4dff4d;font-size:34pt"><i class="fa-solid fa-house"></i> Domain: {{ domain }}
+    <s onclick="myFunction();" style="font-size:20px;color:dodgerblue;cursor:pointer" title="click to switch between light/dark mode">
+            <i class="fa-solid fa-gear fa-spin" style="--fa-animation-duration: 30s;"></i></s>
+    <a style="font-size:20px;color:dodgerblue" href="" download="{{ domain }}.html"><i class="fa-solid fa-file-export" title="export"></i></a> </b>
+<h5><i class="fa-regular fa-clock"></i> Curret time: {{ time }}</h5>
+
+
+<h2>A records:</h2>
+{% if a == "none" %} <h3 style="color:crimson"><i class="fa-solid fa-circle-question fa-beat-fade"></i> No A records</h3><br>
+{% else %}{% for data in a %}<h3>{{ data }}</h3><br>{% endfor %}{% endif %}
+<h2>AAAA records:</h2>
+{% if aaaa == "none" %} <h3 style="color:crimson"><i class="fa-solid fa-circle-question fa-beat-fade"></i> No AAAA records</h3><br>
+{% else %}{% for data in aaaa %}<h3>{{ data }}</h3><br>{% endfor %}{% endif %}
+<h2><i class="fa-solid fa-server"></i> NS records:</h2>
+{% if ns == "none" %} <h3><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> No NS records</h3><br>
+{% else %}{% for data in ns %}<h3>{{ data }}</h3><br>{% endfor %}{% endif %}
+<h2><i class="fa-solid fa-inbox"></i> MX records:</h2>
+{% if mx == "none" %} <h3 style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> No MX records</h3><br>
+{% else %}{% for data in mx %}<h3>{{ data }}</h3><br>{% endfor %}{% endif %}
+<h2 ><i class="fa-solid fa-file-lines"></i> TXT records:</h2>
+{% if txt == "none" %} <h3 style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> No TXT records</h3><br>
+{% else %}{% for data in txt %}<h3>{{ data }}</h3><br>{% endfor %}{% endif %}
+<h2><i class="fa-solid fa-user-group"></i> SOA records:</h2>
+{% if soa == "none" %} <h3 style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> No SOA records</h3><br>
+{% else %}{% for data in soa %}<h3>{{ data }}</h3><br>{% endfor %}{% endif %}
+<br>
+<h2>WWW records</h2>
+{% if www == "none" %}<h3 style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> Domain doesn't have www record</h3>
+{% elif www == "correct" %}<h3 style="color:gold">Domain have www record: <address title="click to visit website"><a style="color:dodgerblue" target="_blank" href={{ wans }}>"www.{{ domain }}"</a></address></h3>{% endif %}
+<br>
+<h2><i class="fa-solid fa-id-card"></i> Registrar:</h2>
+{% if registrar == "none" %} <h3 style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> Registrar unknown</h3>
+{% else %}<h3>{{ registrar }}</h3>{% endif %}
+<br>
+<h2><i class="fa-solid fa-calendar-check"></i> Expiration date:</h2>
+{% if registrar == "none" %} <h3 style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> Expiration date unknown</h3>
+{% else %}<h3>{{ exp_date }}</h3>{% endif %}
+<br>
+<h2><i class="fa-solid fa-earth-americas"></i> ASN records:</h2>
+<h3>IP:{{ ip }}</h3>
+<h3>ASN:{{ asn }}</h3>
+<h3>Country:{{ country }}</h3>
+<h3>Registry:{{ registry }}</h3>
+<h3>Description:{{ description }}</h3>
+<br>
+<style>
+    sup {
+        color: dodgerblue;
+        font-size: 16px;
+       }
+</style>
+<h2><i class="fa-solid fa-person-circle-question"></i> Comparing Whois name_server records <a href="whoisdetails" target="_blank"><sup title="click to show more info"><i class="fa-solid fa-circle-info fa-bounce"></i></sup></a></h2>
+{% if whois_ns == "correct" %} <h3 style="color:gold"><i class="fa-solid fa-person-circle-check"></i> Whois name_server records correct</h3>
+{% elif whois_ns == "misconfigured" %} <h3 style="color:crimson"><i class="fa-solid fa-person-circle-xmark fa-beat-fade"></i> Whois name_server records misconfiguration</h3>{% endif %}
+<br>
+<h2><i class="fa-solid fa-location-dot"></i> Evaluating Name_Server IP <a href="nsdetails" target="_blank"><sup title="click to show more info"><i class="fa-solid fa-circle-info fa-bounce"></i></sup></a></h2>
+{% if ns_ip == "correct" %} <h3 style="color:gold"> Name_Server IP configuration correct</h3>
+{% elif ns_ip == "misconfigured" %} <h3 style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> Name_Server nested in same IP</h3>
+{% elif ns_ip == "none" %} <h3 style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> No NS records to evaluate</h3>{% endif %}
+<br>
+<h2><i class="fa-solid fa-envelope-open"></i> Email service:</h2>
+{% if mail_search == "misconfigured" %}<h3 style="color:crimson"><i class="fa-solid fa-circle-question fa-beat-fade"></i> No email service found</h3>
+{% else %}
+    <h3>
+        {% if mail_search == "Office_365" %}<i class="fa-brands fa-windows"></i>
+        {% elif mail_search == "Gmail" %}<i class="fa-brands fa-google"></i>
+        {% elif mail_search == "Google_Workspace" %}<i class="fa-brands fa-google"></i>
+        {% elif mail_search == "Amazon_SES" %}<i class="fa-brands fa-aws"></i>
+        {% elif mail_search == "Yahoo!_Mail" %}<i class="fa-brands fa-yahoo"></i>
+        {% endif %}
+        {{ mail_search }}</h3>{% endif %}
+<br>
+{% if mail_search == "Office_365" %}
+<h2><i class="fa-brands fa-windows"></i> Checking if DNS records are configured for Office 365</h2>
+{% if auto == "misconfigured" %}<h3 style="color:crimson">CNAME records not configured for Office 365</h3>
+{% elif auto == "correct" %}<h3 style="color:gold">CNAME records have 'autodiscover.outlook.com' (Office 365)</h3>{% endif %}
+{% if msoid == "correct" %}<h3 style="color:gold">CNAME records have 'clientconfig.microsoftonline-p.net' (Office 365)</h3>{% endif %}
+{% if lync == "correct" %}<h3 style="color:gold">CNAME records have 'webdir.online.lync.com' (Skype)</h3>{% endif %}
+{% if 365mx == "misconfigured" %}<h3 style="color:crimson">MX records not configured for Office 365</h3>
+{% elif 365mx == "update" %}<h3 style="color:crimson">MX records deprecated, please update to 'mail.protection.outlook.com'</h3>
+{% elif 365mx == "correct" %}<h3 style="color:gold">MX records have 'mail.protection.outlook.com'</h3>{% endif %}
+{% if spf == "misconfigured" %}<h3 style="color:crimson">SPF records not configured for Office 365</h3>
+{% elif spf == "correct" %}<h3 style="color:gold">SPF records have 'include:spf.protection.outlook.com'</h3>{% endif %}
+{% if sipdir == "misconfigured" %}<h3 style="color:crimson">SRV records doesn't have 'sipdir.online.lync.com'</h3>
+{% elif sipdir == "correct" %}<h3 style="color:gold">SRV records have 'sipdir.online.lync.com'</h3>{% endif %}
+{% if sipfed == "misconfigured" %}<h3 style="color:crimson">SRV records doesn't have 'sipfed.online.lync.com'</h3>
+{% elif sipfed == "correct" %}<h3 style="color:gold">SRV records have 'sipfed.online.lync.com'</h3>{% endif %}
+{% endif %}
+<br>
+
+</body>
+</html>

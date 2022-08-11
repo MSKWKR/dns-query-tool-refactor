@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://kit.fontawesome.com/9c938b3d7b.js" crossorigin="anonymous"></script>
+    <title>Dnsquery/homepage</title>
+    <script>
+    function myFunction() {
+    document.body.classList.toggle("light-body");
+    }
+    </script>
+</head>
+<style>
+    body {
+        background-color: #1a1a1a;
+        color: white;
+        text-align: center;
+        font-family: 'Trebuchet MS', sans-serif;
+        font-size: 24px;
+        }
+    .light-body {
+        background-color: #e1e1ea;
+        color: black;
+        }
+    input {
+        width: 50%;
+        padding: 12px 20px;
+        margin: 8px 0;
+        display: inline-block;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 24px;
+        }
+    p {
+        text-align: center;
+        width: 1450px;
+        margin: auto;
+        border: 2px solid #4dff4d;
+        border-radius: 10px;
+        }
+</style>
+<body>
+    <p style="border:0px"><i class="fa-solid fa-book-bookmark" style="color:#4dff4d;font-size:34pt"></i>
+        <b style="text-align:center;color:#4dff4d;font-size:34pt;"> Dnsquery </b><s onclick="myFunction();" style="font-size:20px;color:dodgerblue;cursor:pointer" title="click to switch between light/dark mode">
+            <i class="fa-solid fa-gear fa-spin" style="--fa-animation-duration: 30s;"></i></s></p>
+    <form action="search/" method="post" target="_blank" autocomplete="on">
+    {% csrf_token %}
+    <h2><i class="fa-brands fa-sistrix fa-bounce" style="--fa-animation-duration: 5s;--fa-bounce-rebound:0;--fa-bounce-height:-10px"></i> Enter domain name:<br></h2>
+    <input type="text" id="domain" name="domain" style="font-size:24px" placeholder="example.com" required autofocus>
+    <input style="background-color:#4dff4d;cursor:pointer" type="submit" value="Enter">
+    </form>
+<p>
+    <b><i class="fa-solid fa-paper-plane"></i> Summary:</b><br>
+    <sub style="font-size:16px">
+        Dnsquery is a tool that searches the given domain for basic DNS information such as A, NS, MX, SOA etc.
+        <br>
+        Additionally, it searches for ASN records, registrar and the expiration date of the domain.
+        <br>
+        It also evaluates whether multiple DNS are nested in the same IP and check for differences between Whois records and DNS records.
+        <br>
+        Lastly, it shows the Email service provider of the given domain( if there is one ), if the domain uses "Office 365 services", it will then check whether the required records such as SPF, SRV are present.
+        <br>
+    </sub>
+</p>
+<br><br><br><br><br>
+</body>
+<br><br>
+
+<address style="font-size:16px"><a style="color:dodgerblue" target="_blank" href="https://github.com/FDS-Andrew/Dnstool.git"><i class="fa-brands fa-github"></i>for more details on Dnsquery</a></address>
+
+</html>
