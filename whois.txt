@@ -1,25 +1,57 @@
 {
-  "domain_name": "freedom.net.tw",
-  "creation_date": "2006-11-23 23:14:54",
-  "expiration_date": "2031-11-24 00:00:00",
-  "name_servers": "dns1.freedom.net.tw     122.146.12.30 \n      dns2.freedom.net.tw     104.236.202.184 \n      dns3.freedom.net.tw     128.199.119.242",
-  "registrar": "NET-CHINESE",
-  "registrar_url": "http://www.net-chinese.com.tw",
-  "registrant_name": "\u81ea\u7531\u7cfb\u7d71\u80a1\u4efd\u6709\u9650\u516c\u53f8",
-  "registrant_organization": "\u81ea\u7531\u7cfb\u7d71\u80a1\u4efd\u6709\u9650\u516c\u53f8",
-  "registrant_city": "Building H, 4F-1 No.3-2, Park St., Nangang Dist.",
-  "registrant_street": "+886.281924450",
-  "registrant_state_province": "TW",
-  "registrant_country": "Taipei, IN TW",
-  "registrant_phone": null,
-  "registrant_fax": "+886.226550668",
-  "registrant_email": "Freedom Systems Inc.",
-  "admin": "Hank   Yu",
-  "admin_email": "patlaboryu@gmail.com",
-  "admin_phone": "+886.226550668",
-  "admin_fax": "+886.281924450",
-  "tech": "Hank   Yu",
-  "tech_email": "patlaboryu@gmail.com",
-  "tech_phone": "+886.226550668",
-  "tech_fax": "+886.281924450"
+  "domain_name": [
+    "GOOGLE.COM",
+    "google.com"
+  ],
+  "registrar": "MarkMonitor, Inc.",
+  "whois_server": "whois.markmonitor.com",
+  "referral_url": null,
+  "updated_date": [
+    "2019-09-09 15:39:04",
+    "2019-09-09 15:39:04+00:00"
+  ],
+  "creation_date": [
+    "1997-09-15 04:00:00",
+    "1997-09-15 07:00:00+00:00"
+  ],
+  "expiration_date": [
+    "2028-09-14 04:00:00",
+    "2028-09-13 07:00:00+00:00"
+  ],
+  "name_servers": [
+    "NS1.GOOGLE.COM",
+    "NS2.GOOGLE.COM",
+    "NS3.GOOGLE.COM",
+    "NS4.GOOGLE.COM",
+    "ns2.google.com",
+    "ns4.google.com",
+    "ns3.google.com",
+    "ns1.google.com"
+  ],
+  "status": [
+    "clientDeleteProhibited https://icann.org/epp#clientDeleteProhibited",
+    "clientTransferProhibited https://icann.org/epp#clientTransferProhibited",
+    "clientUpdateProhibited https://icann.org/epp#clientUpdateProhibited",
+    "serverDeleteProhibited https://icann.org/epp#serverDeleteProhibited",
+    "serverTransferProhibited https://icann.org/epp#serverTransferProhibited",
+    "serverUpdateProhibited https://icann.org/epp#serverUpdateProhibited",
+    "clientUpdateProhibited (https://www.icann.org/epp#clientUpdateProhibited)",
+    "clientTransferProhibited (https://www.icann.org/epp#clientTransferProhibited)",
+    "clientDeleteProhibited (https://www.icann.org/epp#clientDeleteProhibited)",
+    "serverUpdateProhibited (https://www.icann.org/epp#serverUpdateProhibited)",
+    "serverTransferProhibited (https://www.icann.org/epp#serverTransferProhibited)",
+    "serverDeleteProhibited (https://www.icann.org/epp#serverDeleteProhibited)"
+  ],
+  "emails": [
+    "abusecomplaints@markmonitor.com",
+    "whoisrequest@markmonitor.com"
+  ],
+  "dnssec": "unsigned",
+  "name": null,
+  "org": "Google LLC",
+  "address": null,
+  "city": null,
+  "state": "CA",
+  "registrant_postal_code": null,
+  "country": "US"
 }

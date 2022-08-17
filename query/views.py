@@ -163,7 +163,6 @@ def search(request):
                 else:
                     error = "true"
                     return "misconfigured"
-                    break
         except Exception:
             return "misconfigured"
         if error == "false":
@@ -257,7 +256,6 @@ def search(request):
                     except AttributeError:
                         ans = 1
                         return regi.upper()
-                        break
             except AttributeError:
                 pass
         if ans != 1:
@@ -284,10 +282,8 @@ def search(request):
                         exp = re.sub(r'^\s*', '', lines[num])
                         exp = re.sub(r",", '', exp)
                         return exp
-                        break
                     else:
                         return exp
-                        break
             except AttributeError:
                 pass
             num += 1
@@ -331,12 +327,12 @@ def search(request):
                 mx = dns.resolver.resolve(domain, "MX")
                 for data in mx:
                     if re.search(r"mail.protection.outlook.com", str(data)):
-                        return "correct"
                         ans = 1
+                        return "correct"
                         break
                     elif re.search(r"protection.outlook.com", str(data)):
-                        return "update"
                         ans = 1
+                        return "update"
                         break
                     else:
                         pass
@@ -350,8 +346,8 @@ def search(request):
                 spf = dns.resolver.resolve(domain, "txt")
                 for data in spf:
                     if re.search(r"include:spf.protection.outlook.com", str(data)):
-                        return "correct"
                         ans = 1
+                        return "correct"
                         break
                     else:
                         pass
@@ -417,7 +413,6 @@ def search(request):
                     elif num == 6:
                         return "Yahoo!_Mail"
                     return exchange_list[num]
-                    break
                 else:
                     num += 1
             if ans == 0:
@@ -470,9 +465,14 @@ def whoisdetails(request):
     global domain
     ns_ans = []
     missing = []
+    whoishtml = []
     template = loader.get_template('whois.html')
     with open("whois.txt", "r", encoding="utf-8") as w:
-        whoishtml = w.read()
+        for lines in w:
+            lines = re.sub(r"\\n", "", lines)
+            lines = re.sub(r"^{", "", lines)
+            lines = re.sub(r"}$", "", lines)
+            whoishtml.append(lines)
         whoistxt = str(w.read())
     ns = dns.resolver.resolve(domain, "NS")
     for data in ns:
@@ -480,7 +480,7 @@ def whoisdetails(request):
     def quicktest():
         error = "false"
         for num in range(len(ns_ans)):
-            if re.search(ns_ans[num], whoistxt):
+            if re.search(ns_ans[num], str(whoishtml)):
                 pass
             else:
                 error = "true"

@@ -15,7 +15,11 @@
 </style>
 <body>
 <h2 style="color:#4dff4d">Whois record:</h2>
-<p style="color:white; text-align: left">{{ whoistxt }}</p>
+<p style="color:white;text-align:left">
+    {% for x in whoistxt %}
+    {{ x }}<br>
+    {% endfor %}
+</p>
 <h2 style="color:#4dff4d">NS record:</h2>
 {% for num in ns %}<p style="color:white">{{ num }}</p>{% endfor %}
 <h2 style="color:#4dff4d">Method:</h2>
