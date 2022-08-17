@@ -70,16 +70,16 @@ def search(request):
                                             ); """
         # create a database connection
         conn = create_connection(database)
-        # create tables
-        if conn is not None:
-                # create projects table
-                create_table(conn, sql_create_domain_table)
-        else:
-            print("Error! cannot create the database connection.")
         if soa_check(domain2) == "same":
             print("same")
         else:
             with conn:
+                try:
+                    cursor = conn.cursor()
+                    cursor.execute('drop table '+domain2)
+                except Exception:
+                    pass
+                create_table(conn, sql_create_domain_table)
                 # trivial records
                 type = ["A", "AAAA", "NS", "MX", "TXT", "SOA"]
                 for x in type:
@@ -87,7 +87,7 @@ def search(request):
                         records = (x, record_search(x)[num])
                         create_record(conn, domain2, records)
                 # whois
-                w = str(whois.whois(domain))
+                w = str(whois.whois(domain)).lower()
                 records = ("whois", w)
                 create_record(conn, domain2, records)
                 # asn
@@ -123,8 +123,11 @@ def search(request):
         except Exception:
             return "none"
         cursor = conn.cursor()
-        cursor.execute('select record_value from '+domain2+' where record_type="SOA"')
-        result = cursor.fetchall()
+        try:
+            cursor.execute('select record_value from '+domain2+' where record_type="SOA"')
+            result = cursor.fetchall()
+        except Exception:
+            return "none"
         if serial:
             if re.search(str(serial), str(result)):
                 return "same"
@@ -472,7 +475,7 @@ def whoisdetails(request):
             lines = re.sub(r"\\n", "", lines)
             lines = re.sub(r"^{", "", lines)
             lines = re.sub(r"}$", "", lines)
-            whoishtml.append(lines)
+            whoishtml.append(lines.lower())
         whoistxt = str(w.read())
     ns = dns.resolver.resolve(domain, "NS")
     for data in ns:
