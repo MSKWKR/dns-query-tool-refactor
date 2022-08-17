@@ -220,7 +220,7 @@ def search(request):
                 registry.append(results['asn_registry'])
                 description.append(results['asn_description'])
 
-        except dns.resolver.NoAnswer:
+        except Exception:
             return "none"
         if type == "ip":
             return ip_list
