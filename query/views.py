@@ -145,8 +145,11 @@ def search(request):
                 return "none"
             else:
                 result.append(row[0])
-        if "".join(result) == "none":
-            return "none"
+        try:
+            if "".join(result) == "none":
+                return "none"
+        except Exception:
+            pass
         return result
 
     def whois_ns_compare():
