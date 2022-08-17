@@ -203,25 +203,25 @@ def search(request):
         country = []
         registry = []
         description = []
-        try:
-            ns = dns.resolver.resolve(domain, "NS")
-            for ns_data in ns:
-                name = str(ns_data)
-                a = dns.resolver.resolve(name, "A")
-                for a_data in a:
-                    ip_list.add(str(a_data))
-            ip_list = list(ip_list)
-            for num in range(len(ip_list)):
-                net = Net(ip_list[num])
-                obj = IPASN(net)
-                results = obj.lookup()
-                asn_list.append(results['asn'])
-                country.append(results['asn_country_code'])
-                registry.append(results['asn_registry'])
-                description.append(results['asn_description'])
-
-        except Exception:
-            return "none"
+        if type == "asn_check":
+            try:
+                ns = dns.resolver.resolve(domain, "NS")
+                for ns_data in ns:
+                    name = str(ns_data)
+                    a = dns.resolver.resolve(name, "A")
+                    for a_data in a:
+                        ip_list.add(str(a_data))
+                ip_list = list(ip_list)
+                for num in range(len(ip_list)):
+                    net = Net(ip_list[num])
+                    obj = IPASN(net)
+                    results = obj.lookup()
+                    asn_list.append(results['asn'])
+                    country.append(results['asn_country_code'])
+                    registry.append(results['asn_registry'])
+                    description.append(results['asn_description'])
+            except Exception:
+                return "none"
         if type == "ip":
             return ip_list
         if type == "asn":
@@ -441,6 +441,7 @@ def search(request):
         "soa": database_search("SOA"),
         "whois_ns": whois_ns_compare(),
         "ns_ip": ns_ip_compare(),
+        "asn_check": as_search("asn_check"),
         "ip": database_search("ip"),
         "asn": database_search("asn"),
         "country": database_search("country"),
