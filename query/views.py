@@ -181,6 +181,8 @@ def search(request):
         ns = []
         for row in result:
              ns.append(row[0])
+        if len(ns) == 1:
+            return "correct"
         try:
             ip_num = 0
             ip_set = set()
