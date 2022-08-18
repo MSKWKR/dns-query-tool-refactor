@@ -94,9 +94,13 @@ def search(request):
                 # asn
                 type = ["ip", "asn", "country", "registry", "description"]
                 for x in type:
-                    for num in range(len(as_search(x))):
-                        records = (x , as_search(x)[num])
-                        create_record(conn , domain2, records)
+                    if as_search(x) == "private_error":
+                        records = (x, "private_error")
+                        create_record(conn, domain2, records)
+                    else:
+                        for num in range(len(as_search(x))):
+                            records = (x, as_search(x)[num])
+                            create_record(conn, domain2, records)
 
     def record_search(type):
         domain2 = re.sub("\\.","_", domain)
@@ -144,18 +148,10 @@ def search(request):
         for row in tempresult:
             if str(row[0]) == "none":
                 return "none"
+            elif str(row[0]) == "private_error":
+                return "private_error"
             else:
                 result.append(row[0])
-        try:
-            if "".join(result) == "none":
-                return "none"
-        except Exception:
-            pass
-        try:
-            if "".join(result) == "private_error":
-                return "private_error"
-        except Exception:
-            pass
         return result
 
     def whois_ns_compare():
@@ -230,9 +226,8 @@ def search(request):
                 registry.append(results['asn_registry'])
                 description.append(results['asn_description'])
         except ipwhois.exceptions.IPDefinedError:
+            print("error")
             return "private_error"
-        except Exception:
-            return "none"
         if type == "ip":
             return ip_list
         if type == "asn":
