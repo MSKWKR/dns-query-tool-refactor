@@ -87,7 +87,6 @@ def search(request):
                 for x in type:
                     for num in range(len(record_search(x))):
                         records = (x, record_search(x)[num])
-                        sleep(2.5)
                         create_record(conn, domain2, records)
                 # whois
                 w = str(whois.whois(domain)).lower()
@@ -98,12 +97,10 @@ def search(request):
                 for x in type:
                     if as_search(x) == "private_error":
                         records = (x, "private_error")
-                        sleep(2.5)
                         create_record(conn, domain2, records)
                     else:
                         for num in range(len(as_search(x))):
                             records = (x, as_search(x)[num])
-                            sleep(2.5)
                             create_record(conn, domain2, records)
 
     def record_search(type):
@@ -119,6 +116,7 @@ def search(request):
                 q = dns.resolver.resolve(domain, type)
                 for data in q:
                     record.append(str(data))
+                    sleep(0.5)
             except Exception:
                 record.append("none")
             return record
