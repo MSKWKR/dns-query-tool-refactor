@@ -116,7 +116,6 @@ def search(request):
                 q = dns.resolver.resolve(domain, type)
                 for data in q:
                     record.append(str(data))
-                    sleep(0.5)
             except Exception:
                 record.append("none")
             return record
