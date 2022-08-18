@@ -179,24 +179,20 @@ def search(request):
         domain2 = record_search("domain")
         conn = sqlite3.connect("query.db")
         cursor = conn.cursor()
-        cursor.execute('select record_value from '+domain2+' where record_type="NS"')
+        cursor.execute('select record_value from '+domain2+' where record_type="ip"')
         result = cursor.fetchall()
         cursor.close()
-        ns = []
+        ip = []
         for row in result:
-             ns.append(row[0])
-        if len(ns) == 1:
+            ip.append(row[0])
+        if len(ip) == 1:
             return "correct"
         try:
-            ip_num = 0
             ip_set = set()
-            for name in ns:
-                a = dns.resolver.resolve(name, "A")
-                for a_data in a:
-                    string = re.sub(r".\d+$", "", str(a_data))
-                    ip_set.add(string)
-                    ip_num += 1
-            if len(ip_set) != ip_num:
+            for num in ip:
+                string = re.sub(r".\d+$", "", str(num))
+                ip_set.add(string)
+            if len(ip_set) != len(ip):
                 return "misconfigured"
             else:
                 return "correct"
