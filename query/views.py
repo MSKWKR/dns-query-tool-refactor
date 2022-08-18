@@ -1,3 +1,4 @@
+import ipwhois.exceptions
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.template import loader
@@ -150,6 +151,11 @@ def search(request):
                 return "none"
         except Exception:
             pass
+        try:
+            if "".join(result) == "private_error":
+                return "private_error"
+        except Exception:
+            pass
         return result
 
     def whois_ns_compare():
@@ -223,6 +229,8 @@ def search(request):
                 country.append(results['asn_country_code'])
                 registry.append(results['asn_registry'])
                 description.append(results['asn_description'])
+        except ipwhois.exceptions.IPDefinedError:
+            return "private_error"
         except Exception:
             return "none"
         if type == "ip":
