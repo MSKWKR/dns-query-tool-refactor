@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'dnsquery'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_0C05FE8131FD4553A66A2B29FCD2C1B5 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CEEF35E03D904287B2C63A90CA33736C }}
