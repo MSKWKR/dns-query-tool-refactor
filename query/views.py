@@ -87,8 +87,8 @@ def search(request):
                 for x in type:
                     for num in range(len(record_search(x))):
                         records = (x, record_search(x)[num])
+                        sleep(1)
                         create_record(conn, domain2, records)
-                        sleep(0.25)
                 # whois
                 w = str(whois.whois(domain)).lower()
                 records = ("whois", w)
@@ -98,13 +98,13 @@ def search(request):
                 for x in type:
                     if as_search(x) == "private_error":
                         records = (x, "private_error")
+                        sleep(1)
                         create_record(conn, domain2, records)
-                        sleep(0.25)
                     else:
                         for num in range(len(as_search(x))):
                             records = (x, as_search(x)[num])
+                            sleep(1)
                             create_record(conn, domain2, records)
-                            sleep(0.25)
 
     def record_search(type):
         domain2 = re.sub("\\.","_", domain)
