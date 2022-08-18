@@ -105,7 +105,7 @@ def search(request):
     def record_search(type):
         domain2 = re.sub("\\.","_", domain)
         domain2 = re.sub(r"-", "_", domain2)
-        if re.search(r"^[0-9]", domain2):
+        if re.search(r"^\d", domain2):
             domain2 = str("_"+domain2)
         record = []
         if type == "domain":
@@ -155,25 +155,44 @@ def search(request):
         return result
 
     def whois_ns_compare():
-        domain2 = record_search("domain")
-        conn = sqlite3.connect("query.db")
-        cursor = conn.cursor()
-        cursor.execute('select record_value from '+domain2+' where record_type="whois"')
-        result = cursor.fetchall()
-        cursor.close()
-        for row in result:
-            w = row[0]
-        try:
-            record = dns.resolver.resolve(domain, "NS")
-            for data in record:
-                pattern = str(data)
-                if re.search(pattern, w):
-                    pass
-                else:
-                    return "misconfigured"
-        except Exception:
+        x = set()
+        w = str(whois.whois(domain).name_servers).lower()
+        if '\'' in w:
+            replacements = [
+                ("\'", ""),
+                ("\[", ""),
+                ("\]", ""),
+                ("\,", "")
+            ]
+            for old, new in replacements:
+                w = re.sub(old, new, w)
+            for ns in w.split():
+                x.add(ns)
+        else:
+            for ns in w.split():
+                x.add(ns)
+        x = list(x)
+        y = []
+        z = []
+        for num in x:
+            if re.search(r"\d$", num):
+                z.append(num)
+        for num in z:
+            x.remove(num)
+        ns = dns.resolver.resolve(domain, "NS")
+        for data in ns:
+            data = re.sub(r"\.$", "", str(data))
+            y.append(str(data))
+        x = set(x)
+        y = set(y)
+        joined = x.union(y)
+        if len(joined) != len(x):
             return "misconfigured"
-        return "correct"
+        elif len(joined) != len(y):
+            return "misconfigured"
+        else:
+            return "correct"
+
 
     def ns_ip_compare():
         domain2 = record_search("domain")
@@ -472,34 +491,58 @@ def whoisdetails(request):
     missing = []
     whoishtml = []
     template = loader.get_template('whois.html')
-    with open("whois.txt", "r", encoding="utf-8") as w:
-        for lines in w:
-            lines = re.sub(r"\\n", "", lines)
-            lines = re.sub(r"^{", "", lines)
-            lines = re.sub(r"}$", "", lines)
-            whoishtml.append(lines.lower())
-        whoistxt = str(w.read())
+    x = set()
+    w = str(whois.whois(domain).name_servers).lower()
+    if '\'' in w:
+        replacements = [
+            ("\'", ""),
+            ("\[", ""),
+            ("\]", ""),
+            ("\,", "")
+        ]
+        for old, new in replacements:
+            w = re.sub(old, new, w)
+        for ns in w.split():
+            x.add(ns)
+    else:
+        for ns in w.split():
+            x.add(ns)
+    x = list(x)
+    y = []
+    z = []
+    for num in x:
+        if re.search(r"\d$", num):
+            z.append(num)
+    for num in z:
+        x.remove(num)
     ns = dns.resolver.resolve(domain, "NS")
     for data in ns:
-        ns_ans.append(str(data))
-    def quicktest():
-        error = "false"
-        for num in range(len(ns_ans)):
-            if re.search(ns_ans[num], str(whoishtml)):
-                pass
-            else:
-                error = "true"
-                missing.append(ns_ans[num])
-        if error == "true":
-            return "error"
-        elif error == "false":
-            return "correct"
+        data = re.sub(r"\.$", "", str(data))
+        y.append(str(data))
+    x = set(x)
+    y = set(y)
+    joined = x.union(y)
+    error = 0
+    whois_error = []
+    ns_error = []
+    for num in joined:
+        if num in x:
+            pass
+        else:
+            error = 1
+            whois_error.append(num)
+    for num in joined:
+        if num in y:
+            pass
+        else:
+            error = 1
+            ns_error.append(num)
     context = {
-        "whoistxt": whoishtml,
-        "ns": ns_ans,
-        "domain": domain,
-        "missing": missing,
-        "check": quicktest(),
+        "whois_list": list(x),
+        "ns_list": list(y),
+        "whois_error": whois_error,
+        "ns_error": ns_error,
+        "error": error,
     }
     return HttpResponse(template.render(context, request))
 

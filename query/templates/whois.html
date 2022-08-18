@@ -15,20 +15,29 @@
 </style>
 <body>
 <h2 style="color:#4dff4d">Whois record:</h2>
-<p style="color:white;text-align:left">
-    {% for x in whoistxt %}
-    {{ x }}<br>
+<p style="color:white;">
+    {% for x in whois_list %}
+    {{ x }}<br><br>
     {% endfor %}
 </p>
 <h2 style="color:#4dff4d">NS record:</h2>
-{% for num in ns %}<p style="color:white">{{ num }}</p>{% endfor %}
+{% for num in ns_list %}<p style="color:white">{{ num }}</p>{% endfor %}
 <h2 style="color:#4dff4d">Method:</h2>
 <p style="color:white">Check if NS record matches "name_servers" in Whois record</p>
-{% if check == "error" %}
-<p style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> Whois record missing:{{ missing }}</p>
+{% if error == 1 %}
+<p style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> Whois record missing:<br>
+    {% for x in whois_error %}
+    {{ x }}<br>
+    {% endfor %}
+</p>
+<p style="color:crimson"><i class="fa-solid fa-triangle-exclamation fa-beat-fade"></i> NS record missing:<br>
+    {% for x in ns_error %}
+    {{ x }}<br>
+    {% endfor %}
+</p>
 <p style="color:gold"><i class="fa-solid fa-lightbulb fa-bounce"></i> Solution: Please update Whois record to match NS records</p>
 <br>
-{% elif check == "correct" %}
+{% elif error == 0 %}
 <p style="color:gold">Whois record correct</p>
 {% endif %}
 </body>
