@@ -6,6 +6,7 @@ from ipwhois.net import Net
 from ipwhois.asn import IPASN
 import sys
 import threading
+from time import time, sleep
 import whois
 import dns.zone
 import dns.resolver
@@ -87,6 +88,7 @@ def search(request):
                     for num in range(len(record_search(x))):
                         records = (x, record_search(x)[num])
                         create_record(conn, domain2, records)
+                        sleep(0.25)
                 # whois
                 w = str(whois.whois(domain)).lower()
                 records = ("whois", w)
@@ -97,10 +99,12 @@ def search(request):
                     if as_search(x) == "private_error":
                         records = (x, "private_error")
                         create_record(conn, domain2, records)
+                        sleep(0.25)
                     else:
                         for num in range(len(as_search(x))):
                             records = (x, as_search(x)[num])
                             create_record(conn, domain2, records)
+                            sleep(0.25)
 
     def record_search(type):
         domain2 = re.sub("\\.","_", domain)
