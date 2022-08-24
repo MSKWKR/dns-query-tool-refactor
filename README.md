@@ -18,16 +18,17 @@
 <span style="font-size:12pt">
     <h3>Django:</h3>
         <li>這個 app 是用 django 寫的，需用到 python、html</li>
-        <li>若 python 程式碼要追加外部module，要寫在 <u style="color:dodgerblue">requirements.txt</u>
+        <li>若 python 程式碼要追加外部module，要寫在 <u style="color:dodgerblue">requirements.txt</u></li>
     <h3>Database:</h3>
         <li>有維運的客戶大致上已建database</li>
-        <li>Azure app service 有 bug 會干擾 python-sqlite3 的運作，所以輸出的結果可能有誤
-        <li>若要更改 <u style="color:dodgerblue">query.db</u> 請用 sqlite3 連進去更改
+        <li>Azure app service 有 bug 會干擾 python-sqlite3 的運作，所以輸出的結果可能有誤</li>
+        <li>若要更改 <u style="color:dodgerblue">query.db</u> 請用 sqlite3 連進去更改</li>
     <h3>Html:</h3>
         <li>若要改網站版面設計，html 檔在 template 資料夾裡</li>
-        <li>html 檔裡出現的 variables 都寫在 <u style="color:dodgerblue">views.py</u> 裡 context 的部分
+        <li>html 檔裡出現的 variables 都寫在 <u style="color:dodgerblue">views.py</u> 裡 context 的部分</li>
+            <img src="/images/context.png" alt="context">
         <li>版面有用到 CSS 要注意</li>
-        <li>圖示從 <a href="https://fontawesome.com/">這裡</a> 抓的
+        <li>圖示從 <a href="https://fontawesome.com/">這裡</a> 抓的</li>
         <li>light-mode 的程式碼在 script 裡</li>
     <h3>views.py:</h3>
         <li><u style="color:dodgerblue">views.py</u> 在 query 資料夾裡</li>
@@ -35,36 +36,37 @@
         <h4>search:</h4>
             <li>主要管理answer ( <u style="color:dodgerblue">ans.html</u> )</li>
             <li>取得 domain 名稱跟確認 domain 存在:</li>
-                <img src="/images" alt="get domain name">
+                <img src="/images/domain.png" alt="get domain name">
             <li>把 sql 的過程簡單化:</li>
-                <img src="/images" alt="sql process">
+                <img src="/images/sql.png" alt="sql process">
+                <img src="/images/database_search.png" alt="database">
             <li>確認 SOA 的 serial 有沒有變:</li>
-                <img src="/images" alt="soa_check">
+                <img src="/images/soa.png" alt="soa_check">
             <li>若 SOA 有變則建一個新的 table 並把舊的刪掉:</li>
-                <img src="/images" alt="create_table">
+                <img src="/images/create_table.png" alt="create_table">
             <li>每個 type 都是一筆將會存取的資料:</li>
-                <img src="/images" alt="type">
+                <img src="/images/type.png" alt="type">
             <li>A, AAAA, NS, MX, TXT, SOA 的查詢:</li>
-                <img src="/images" alt="record_search">
+                <img src="/images/record_search.png" alt="record_search">
             <li>比較 whois 裡的 nameservers 跟 NS record 是否一致:</li>
-                <img src="/images" alt="whois_ns_compare">
+                <img src="/images/whois_ns_compare.png" alt="whois_ns_compare">
             <li>比較 NS record 的 IP 是不是放在同個位置:</li>
-                <img src="/images" alt="ns_ip_compare">
+                <img src="/images/ns_ip_compare.png" alt="ns_ip_compare">
             <li>ASN 的查詢:</li>
-                <img src="/images" alt="asn_search">
+                <img src="/images/asn.png" alt="asn_search">
             <li>從 <u style="color:dodgerblue">whois.txt</u> parse 出 註冊商 和 到期日:</li>
-                <img src="/images" alt="reg_exp">
+                <img src="/images/regi.png" alt="regi">
+                <img src="/images/exp.png" alt="exp">
             <br>
             <b style="color:crimson">python-whois 有內建parser但直接將raw data存起來比較方便省時</b>
             <li>用 MX record 來比對 <u style="color:dodgerblue">mail_list.txt</u> 去判定 email provider:</li>
-                <img src="/images" alt="mail_search">
+                <img src="/images/mail_search.png" alt="mail_search">
             <li>若 email provider 是 microsoft 的話要判定有沒有 office 365 該有的 records:</li>
-                <img src="/images" alt="o365">
+                <img src="/images/o365.png" alt="o365">
             <li>看 domain 有沒有架網站:</li>
-                <img src="/images" alt="www_check">
+                <img src="/images/www.png" alt="www_check">
         <h4>whoisdetails:</h4>
-            <li>跟 search 裡的 whois_ns_compare 一樣不過錯誤訊息較詳細:</li>
-                <img src="/images" alt="whoisdetails">
+            <li>跟 search 裡的 whois_ns_compare 一樣不過錯誤訊息較詳細</li>
         <h4>nsdetails:</h4>
-            <li>跟 search 裡的 ns_ip_compare 一樣不過錯誤訊息較詳細:</li>
-                <img src="/images" alt="nsdetails">
+            <li>跟 search 裡的 ns_ip_compare 一樣不過錯誤訊息較詳細</li>
+</span>
