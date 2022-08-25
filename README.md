@@ -30,6 +30,7 @@
         <li>版面有用到 CSS 要注意</li>
         <li>圖示從 <a href="https://fontawesome.com/">這裡</a> 抓的</li>
         <li>light-mode 的程式碼在 script 裡</li>
+            <img src="images/script.png" alt="script">
     <h3>views.py:</h3>
         <li><u style="color:dodgerblue">views.py</u> 在 query 資料夾裡</li>
         <li>index 管理 homepage ( <u style="color:dodgerblue">home.html</u> )</li>
