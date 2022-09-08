@@ -1,6 +1,11 @@
-import whois
-
+"""DNS Tool Box"""
 import dns.resolver
+import dns.exception
+
+
+# DNS_EXCEPTIONS = (dns.exception.FormError, dns.exception.SyntaxError, dns.exception.UnexpectedEnd,
+#                       dns.exception.TooBig, dns.exception.Timeout, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer,
+#                       dns.resolver.NoNameservers)
 
 
 # DNSToolBox is a generic-style set that contains the method that needed to check the domain string
@@ -18,11 +23,24 @@ class DNSToolBox:
     # check factor A for IPv4
     @property
     def A(self) -> str:
-        # the answer is an iterator of 'A' records, need to loop through in order to get the data
-        answers = dns.resolver.resolve(self._domain_string, "A")
-        for answer in answers:
-            # answer is a DNS object, return a converted string
-            return str(answer)
+        try:
+            # the answer is an iterator of 'A' records, need to loop through in order to get the data
+            answers = dns.resolver.resolve(self._domain_string, "A")
+            for answer in answers:
+                # answer is a dns.resolver.Answer instance, return type should be a converted string
+                return str(answer)
+
+        # Error handling when input domain is incorrect
+        except Exception as error:
+            match Exception:
+                # Handle expected error
+                case (dns.exception.FormError, dns.exception.SyntaxError, dns.exception.UnexpectedEnd,
+                      dns.exception.TooBig, dns.exception.Timeout, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer,
+                      dns.resolver.NoNameservers):
+                    return f"Domain Name Error as: {error}"
+                # Handle unexpected error
+                case _:
+                    return f"Unexpected Error as: {error}"
 
     # check factor AAAA for IPv6
     @property
@@ -52,9 +70,13 @@ class DNSToolBox:
 
 def main():
     toolbox = DNSToolBox()
-    test_site = "example.com"
-    toolbox.set_domain_string(test_site)
-    print(toolbox.AAAA)
+    # test_site = "example.com"
+    while True:
+        test_site = input("Enter Domain Name: ")
+        toolbox.set_domain_string(test_site)
+        print("\n", toolbox.A, "\n")
+        if input("Do you want to continue? (y/n)").lower() == "n":
+            break
 
 
 if __name__ == "__main__":
