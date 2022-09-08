@@ -39,7 +39,7 @@ class DNSToolBox:
         # turn input all to uppercase for comparison
         record_type = record_type.upper()
         match record_type:
-            case ("A" | "AAAA" | "NS" | "MX" | "TXT" | "SOA"):
+            case ("A" | "AAAA" | "NS" | "MX" | "TXT" | "SOA" | "CNAME"):
                 try:
                     # the answer is an iterator of type records, need to loop through in order to get the data
                     answers = dns.resolver.resolve(self._domain_string, record_type)
@@ -65,6 +65,7 @@ class DNSToolBox:
                         return f"www.{self._domain_string}"
                 except Exception as error:
                     return f"www domain error: {error}"
+
             case _:
                 raise NameError(f"Record Type Input Error: {record_type}")
 
@@ -75,8 +76,11 @@ def main():
     while True:
         test_site = input("Enter Domain Name: ")
         toolbox.set_domain_string(test_site)
-        search_type = input("Enter Records you want to check: ").upper()
-        print("\n", toolbox.search_with_type(search_type), "\n")
+        finished_record_type = ["a", "aaaa", "ns", "mx", "txt", "soa", "www", "cname"]
+        for dns_record_type in finished_record_type:
+            result = toolbox.search_with_type(dns_record_type)
+            print(f"{dns_record_type}: {result}")
+
         if input("Do you want to continue? (y/n)").lower() == "n":
             break
 
