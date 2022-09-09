@@ -44,6 +44,7 @@ class DNSToolBox:
         self._domain_string = DNSToolBox.parse_raw_domain(domain_string)
         return self._domain_string
 
+    # ------------------------- Search Tools ------------------------------------
     def search(self, record_type: str) -> Union[dns.resolver.Resolver, None]:
         """
         The method search with type is a generic function
@@ -84,6 +85,32 @@ class DNSToolBox:
                 dns.name.EmptyLabel, socket.error):
             return None
 
+    def search_cname(self, o365_record_type: str) -> str:
+        record_type = o365_record_type.lower()
+        match record_type:
+            case "auto":
+                search_string = f"autodiscover.{self._domain_string}"
+                regex_comparison_pattern = r"autodiscover.outlook.com"
+            case "msoid":
+                search_string = f"msoid.{self._domain_string}"
+                regex_comparison_pattern = r"clientconfig.microsoftonline-p.net"
+            case "lync":
+                search_string = f"lyncdiscover.{self._domain_string}"
+                regex_comparison_pattern = r"webdir.online.lync.com",
+
+        try:
+            cname_answers = dns.resolver.resolve(search_string, "CNAME")
+            for answer in cname_answers:
+                if re.search(regex_comparison_pattern, str(answer)):
+                    return "correct"
+                else:
+                    return "misconfigured"
+
+        except Exception:
+            return "misconfigured"
+
+        # ------------------------- Fetch Result Tools ------------------------------------
+
     def get_result(self, record_type: str) -> Union[str, List]:
         """
         Function for getting the asked Record Type.
@@ -100,7 +127,7 @@ class DNSToolBox:
         # turn input all to uppercase for comparison
         record_type = record_type.upper()
         match record_type:
-            case ("A" | "AAAA" | "MX" | "SOA" | "CNAME"):
+            case ("A" | "AAAA" | "MX" | "SOA"):
                 answers = self.search(record_type)
                 if answers:
                     # answers is an iterator of type records, need to loop through in order to get the data
@@ -163,16 +190,19 @@ class DNSToolBox:
 
 def main():
     toolbox = DNSToolBox()
-    while True:
-        test_site = input("Enter Domain Name: ")
-        toolbox.set_domain_string(test_site)
-        finished_record_type = ["a", "aaaa", "ns", "mx", "txt", "soa", "www", "cname"]
-        for dns_record_type in finished_record_type:
-            result = toolbox.get_result(dns_record_type)
-            print(f"{dns_record_type}: {result}")
-
-        if input("Do you want to continue? (y/n)").lower() == "n":
-            break
+    toolbox.set_domain_string("freedom.net.tw")
+    # while True:
+    #     test_site = input("Enter Domain Name: ")
+    #     toolbox.set_domain_string(test_site)
+    #     finished_record_type = ["a", "aaaa", "ns", "mx", "txt", "soa", "www"]
+    #     for dns_record_type in finished_record_type:
+    #         result = toolbox.get_result(dns_record_type)
+    #         print(f"{dns_record_type}: {result}")
+    #
+    #     if input("Do you want to continue? (y/n)").lower() == "n":
+    #         break
+    for cname_type in ["auto", "msoid", "lync"]:
+        print(toolbox.search_cname(cname_type))
 
 
 if __name__ == "__main__":
