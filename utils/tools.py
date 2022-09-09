@@ -48,8 +48,11 @@ class DNSToolBox:
         """
         The method search with type is a generic function
         wraps search of the given record type and teh exceptions.
-        :param record_type:
-        :return:
+        :param record_type: The specific type we want to search for the domain
+        :type: str
+
+        :return: The answers by searching the given url with A Record type, None if not found
+        :rtype dns.resolver.Resolver or None
         """
         try:
             return self._res.resolve(self._domain_string, record_type)
@@ -63,9 +66,12 @@ class DNSToolBox:
     def search_www(self) -> Union[dns.resolver.Resolver, None]:
         """
         Search_www check www domain by checking it's A Record.
-        :return:
+        :return: The answers by searching the given url with A Record type, None if not found
+        :rtype dns.resolver.Resolver or None
         """
         try:
+            # this shouldn't be the correct way, what if my input domain is 'www.example.com'?
+            # would cause an error
             answers = dns.resolver.resolve("www." + self._domain_string, "A")
             if answers:
                 return answers
@@ -157,20 +163,16 @@ class DNSToolBox:
 
 def main():
     toolbox = DNSToolBox()
-    # test_site = "example.com"
-    # while True:
-    #     test_site = input("Enter Domain Name: ")
-    #     toolbox.set_domain_string(test_site)
-    #     finished_record_type = ["a", "aaaa", "ns", "mx", "txt", "soa", "www", "cname"]
-    #     for dns_record_type in finished_record_type:
-    #         result = toolbox.get_result(dns_record_type)
-    #         print(f"{dns_record_type}: {result}")
-    #
-    #     if input("Do you want to continue? (y/n)").lower() == "n":
-    #         break
-    test_site = "'''''&@#example.com"
-    test_site = DNSToolBox.parse_raw_domain(test_site)
-    print(test_site)
+    while True:
+        test_site = input("Enter Domain Name: ")
+        toolbox.set_domain_string(test_site)
+        finished_record_type = ["a", "aaaa", "ns", "mx", "txt", "soa", "www", "cname"]
+        for dns_record_type in finished_record_type:
+            result = toolbox.get_result(dns_record_type)
+            print(f"{dns_record_type}: {result}")
+
+        if input("Do you want to continue? (y/n)").lower() == "n":
+            break
 
 
 if __name__ == "__main__":
