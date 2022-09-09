@@ -41,8 +41,8 @@ class DNSToolBox:
         :rtype: str
         """
 
-        self._domain_string = self.parse_raw_domain(domain_string)
-        return domain_string
+        self._domain_string = DNSToolBox.parse_raw_domain(domain_string)
+        return self._domain_string
 
     def search(self, record_type: str) -> Union[dns.resolver.Resolver, None]:
         """
