@@ -1,4 +1,5 @@
 """DNS Tool Box"""
+import re
 import dns.resolver
 import dns.exception
 import socket
@@ -16,6 +17,21 @@ class DNSToolBox:
         self._domain_string = None
         self._res = dns.resolver.Resolver()
 
+    @classmethod
+    def parse_raw_domain(cls, input_domain: str) -> str:
+        """
+        Method parse_raw_domain cleans the input domain and return the domain name
+        :param input_domain: Raw input domain, might have error key-in symbols
+        :type: str
+
+        :return: The cleansed domain string
+        :rtype: str
+        """
+        pattern = '[^A-Za-z0-9.]'
+        input_domain = re.sub(pattern=pattern, repl="", string=input_domain)
+
+        return input_domain
+
     def set_domain_string(self, domain_string: str) -> str:
         """Set_domain_string parses, initialize and return the pure domain string
         :param domain_string: The original input string(unparsed)
@@ -25,7 +41,7 @@ class DNSToolBox:
         :rtype: str
         """
 
-        self._domain_string = domain_string
+        self._domain_string = self.parse_raw_domain(domain_string)
         return domain_string
 
     def search(self, record_type: str) -> Union[dns.resolver.Resolver, None]:
@@ -112,20 +128,49 @@ class DNSToolBox:
             case _:
                 raise NameError(f"Record Type Input Error: {record_type}")
 
+    def get_o365_result(self, o365_type: str):
+        o365_type = o365_type.lower()
+        match o365_type:
+            case "auto":
+                pass
+            case "msoid":
+                pass
+
+            case "lync":
+                pass
+
+            case "365mx":
+                pass
+
+            case "spf":
+                pass
+
+            case "sipdir":
+                pass
+
+            case "sipfed":
+                pass
+
+            case _:
+                pass
+
 
 def main():
     toolbox = DNSToolBox()
     # test_site = "example.com"
-    while True:
-        test_site = input("Enter Domain Name: ")
-        toolbox.set_domain_string(test_site)
-        finished_record_type = ["a", "aaaa", "ns", "mx", "txt", "soa", "www", "cname"]
-        for dns_record_type in finished_record_type:
-            result = toolbox.get_result(dns_record_type)
-            print(f"{dns_record_type}: {result}")
-
-        if input("Do you want to continue? (y/n)").lower() == "n":
-            break
+    # while True:
+    #     test_site = input("Enter Domain Name: ")
+    #     toolbox.set_domain_string(test_site)
+    #     finished_record_type = ["a", "aaaa", "ns", "mx", "txt", "soa", "www", "cname"]
+    #     for dns_record_type in finished_record_type:
+    #         result = toolbox.get_result(dns_record_type)
+    #         print(f"{dns_record_type}: {result}")
+    #
+    #     if input("Do you want to continue? (y/n)").lower() == "n":
+    #         break
+    test_site = "'''''&@#example.com"
+    test_site = DNSToolBox.parse_raw_domain(test_site)
+    print(test_site)
 
 
 if __name__ == "__main__":
