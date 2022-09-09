@@ -12,7 +12,8 @@ class TestDNSToolBox:
     @pytest.mark.parametrize("test_input, expected", [
         pytest.param(TEST_DOMAIN, TEST_DOMAIN),
         pytest.param("", ""),
-        pytest.param("not a domain", "not a domain")
+        pytest.param("$@#example.co*}m", "example.com"),
+        pytest.param("not a domain", "notadomain")
     ])
     def test_set_domain_string(self, test_input, expected):
         # the set domain string equal to the given domain constant
