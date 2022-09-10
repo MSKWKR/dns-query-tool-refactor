@@ -1,9 +1,14 @@
 """DNS Tool Box"""
 import re
+from pprint import pprint
+
 import dns.resolver
 import dns.exception
 import socket
 from typing import Union, List
+
+import requests as requests
+import whois
 
 
 class DNSToolBox:
@@ -44,6 +49,20 @@ class DNSToolBox:
         self._domain_string = DNSToolBox.parse_raw_domain(domain_string)
         return self._domain_string
 
+    def domain_status(self) -> str:
+        """
+        Function domain_status retrieve status code
+        :return: Status String
+        :rtype str
+        """
+        if not self.search_www():
+            status_code = requests.get(f"https://{self._domain_string}").status_code
+        else:
+            domain_string = self.get_result("www")
+            status_code = requests.get(f"https://{domain_string}").status_code
+
+        return str(status_code)
+
     # ------------------------- Search Tools ------------------------------------
     def search(self, record_type: str) -> Union[dns.resolver.Resolver, None]:
         """
@@ -83,6 +102,19 @@ class DNSToolBox:
                 dns.exception.TooBig, dns.exception.Timeout, dns.resolver.NXDOMAIN
                 , dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.resolver.YXDOMAIN,
                 dns.name.EmptyLabel, socket.error):
+            return None
+
+    def search_whois(self) -> Union[whois.parser.WhoisTw, None]:
+        """
+        Query a WHOIS server directly and return the parsed whois data.
+        :return: The result for parsing the WHOIS data, None if not found
+        :rtype whois.parser.WhoisTw, None
+        """
+        try:
+            whois_result = whois.whois(self._domain_string)
+            return whois_result
+        except TypeError as error:
+            print(f"{error=}")
             return None
 
     def search_cname(self, o365_record_type: str) -> str:
@@ -137,14 +169,6 @@ class DNSToolBox:
                 else:
                     return ""
 
-            case "NS":
-                answers = self.search(record_type)
-                ns_result = []
-                for answer in answers:
-                    ns_result.append(str(answer))
-
-                return answer
-
             case "TXT":
                 answers = self.search(record_type)
                 txt_result = []
@@ -191,18 +215,18 @@ class DNSToolBox:
 def main():
     toolbox = DNSToolBox()
     toolbox.set_domain_string("freedom.net.tw")
-    # while True:
-    #     test_site = input("Enter Domain Name: ")
-    #     toolbox.set_domain_string(test_site)
-    #     finished_record_type = ["a", "aaaa", "ns", "mx", "txt", "soa", "www"]
-    #     for dns_record_type in finished_record_type:
-    #         result = toolbox.get_result(dns_record_type)
-    #         print(f"{dns_record_type}: {result}")
-    #
-    #     if input("Do you want to continue? (y/n)").lower() == "n":
-    #         break
-    for cname_type in ["auto", "msoid", "lync"]:
-        print(toolbox.search_cname(cname_type))
+    while True:
+        test_site = input("Enter Domain Name: ")
+        toolbox.set_domain_string(test_site)
+        finished_record_type = ["a", "aaaa", "mx", "txt", "soa", "www"]
+        for dns_record_type in finished_record_type:
+            result = toolbox.get_result(dns_record_type)
+            print(f"{dns_record_type}: {result}\n")
+
+        if input("Do you want to continue? (y/n)").lower() == "n":
+            break
+    # for cname_type in ["auto", "msoid", "lync"]:
+    #     print(toolbox.search_cname(cname_type))
 
 
 if __name__ == "__main__":
