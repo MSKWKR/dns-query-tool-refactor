@@ -1,14 +1,13 @@
 """DNS Tool Box"""
 import re
 from pprint import pprint
-
 import dns.resolver
 import dns.exception
 import socket
 from typing import Union, List
-
-import requests as requests
 import whois
+from ipwhois.net import Net
+from ipwhois.asn import IPASN
 
 
 class DNSToolBox:
@@ -21,7 +20,6 @@ class DNSToolBox:
         """Initializes class attribute"""
         self._domain_string = None
         self._res = dns.resolver.Resolver()
-        self._whois_result = self.search_whois()
 
     @classmethod
     def strip_last_dot(cls, addr: str) -> str:
@@ -62,19 +60,19 @@ class DNSToolBox:
         self._domain_string = DNSToolBox.parse_raw_domain(domain_string)
         return self._domain_string
 
-    def domain_status(self) -> str:
-        """
-        Function domain_status retrieve status code
-        :return: Status String
-        :rtype str
-        """
-        if not self.search_www():
-            status_code = requests.get(f"https://{self._domain_string}").status_code
-        else:
-            domain_string = self.get_result("www")
-            status_code = requests.get(f"https://{domain_string}").status_code
-
-        return str(status_code)
+    # def domain_status(self) -> str:
+    #     """
+    #     Function domain_status retrieve status code
+    #     :return: Status String
+    #     :rtype str
+    #     """
+    #     if not self.search_www():
+    #         status_code = requests.get(f"https://{self._domain_string}").status_code
+    #     else:
+    #         domain_string = self.get_result("www")
+    #         status_code = requests.get(f"https://{domain_string}").status_code
+    #
+    #     return str(status_code)
 
     # ------------------------- Search Tools ------------------------------------
     def search(self, record_type: str) -> Union[dns.resolver.Resolver, None]:
@@ -130,29 +128,29 @@ class DNSToolBox:
             print(f"{error=}")
             return None
 
-    # def search_cname(self, o365_record_type: str) -> str:
-    #     record_type = o365_record_type.lower()
-    #     match record_type:
-    #         case "auto":
-    #             search_string = f"autodiscover.{self._domain_string}"
-    #             regex_comparison_pattern = r"autodiscover.outlook.com"
-    #         case "msoid":
-    #             search_string = f"msoid.{self._domain_string}"
-    #             regex_comparison_pattern = r"clientconfig.microsoftonline-p.net"
-    #         case "lync":
-    #             search_string = f"lyncdiscover.{self._domain_string}"
-    #             regex_comparison_pattern = r"webdir.online.lync.com",
-    #
-    #     try:
-    #         cname_answers = self._res.resolve(search_string, "CNAME")
-    #         for answer in cname_answers:
-    #             if re.search(regex_comparison_pattern, str(answer)):
-    #                 return "correct"
-    #             else:
-    #                 return "misconfigured"
-    #
-    #     except Exception:
-    #         return "misconfigured"
+    @classmethod
+    def search_ipwhois_asn(cls, ip_address: str) -> dict:
+        """
+        Util function that searches the ASN records with the given IP
+        :param ip_address: An IPv4 or IPv6 string
+        :type: str
+
+        :return: An ASN dictionary after parsing with the given ip address, returns an empty dictionary if not found
+        :rtype: dict
+        """
+        # default an empty dictionary
+        asn_results = dict()
+        try:
+            # net is the object for performing network queries
+            net = Net(ip_address)
+            # IPASN is the class for parsing ASN data for an ip address
+            object_ = IPASN(net)
+            asn_results = object_.lookup(ip_address)
+            return asn_results
+
+        except ValueError as error:
+            print(f"{error=}")
+            return asn_results
 
     # ------------------------- Fetch Result Tools ------------------------------------
 
@@ -160,7 +158,7 @@ class DNSToolBox:
         """
         Function for getting the asked Record Type.
         Can accept input Record type 'A', 'AAAA', 'NS', 'MX', 'TXT', 'SOA', 'WWW' with its upper and lower cases.
-        Return an empty string if input record type is incorrect or the domain itself malfunctioned.
+        Return an empty string or empty list if input record type is incorrect or the domain itself malfunctioned.
 
         :param record_type: DNS record type
         :type record_type: str
@@ -172,7 +170,7 @@ class DNSToolBox:
         # turn input all to uppercase for comparison
         record_type = record_type.upper()
         match record_type:
-            case ("A" | "AAAA" | "MX" | "SOA" | "NS"):
+            case ("A" | "AAAA" | "MX" | "SOA"):
                 answers = self.search(record_type)
                 if answers:
                     # answers is an iterator of type records, need to loop through in order to get the data
@@ -199,6 +197,18 @@ class DNSToolBox:
                         ns_result.append(ns)
                 return ns_result
 
+            case ("IPV4" | "IPV6"):
+                a_request_type = "A" if record_type == "IPV4" else "AAAA"
+                ns_list = self.get_result("NS")
+                ip_list = []
+                for ns_data in ns_list:
+                    name = str(ns_data)
+                    a = dns.resolver.resolve(name, a_request_type)
+                    for a_data in a:
+                        ip_list.append(str(a_data))
+
+                return ip_list
+
             case "WWW":
                 answers = self.search_www()
                 return f"www.{self._domain_string}" if answers else ""
@@ -206,58 +216,83 @@ class DNSToolBox:
             case _:
                 raise NameError(f"Record Type Input Error: {record_type}")
 
-    def get_o365_result(self, o365_type: str):
-        o365_type = o365_type.lower()
-        match o365_type:
-            case "auto":
-                pass
-            case "msoid":
-                pass
+    # Since the tool wants the specific field for the ASN,
+    # this is dirty code that I didn't change much
+    def get_asn_result(self) -> dict:
+        """
+        Function for reading the ASN result parsed from search_ipwhois_asn(),
+        will leave all the fields empty if the ip list is empty
 
-            case "lync":
-                pass
+        :return: The required ASN fields
+        :rtype: dict
+        """
+        ip_list = self.get_result("ipv4")
+        asn_list = []
+        country_list = []
+        registry_list = []
+        description_list = []
 
-            case "365mx":
-                pass
+        # Default the fields key
+        asn_dict = dict.fromkeys(['ip_list', 'asn_list', 'country_list', 'registry_list', 'description_list'])
+        for ip in ip_list:
+            asn_result = self.search_ipwhois_asn(ip)
+            asn = asn_result['asn']
+            country = asn_result['asn_country_code']
+            registry = asn_result['asn_registry']
+            description = asn_result['asn_description']
 
-            case "spf":
-                pass
+            asn_list.append(asn)
+            country_list.append(country)
+            registry_list.append(registry)
+            description_list.append(description)
 
-            case "sipdir":
-                pass
+        # assign the lists to its specific field
+        asn_dict['ip_list'] = ip_list
+        asn_dict['asn_list'] = asn_list
+        asn_dict['country_list'] = country_list
+        asn_dict['registry_list'] = registry_list
+        asn_dict['description_list'] = description_list
 
-            case "sipfed":
-                pass
-
-            case _:
-                pass
+        return asn_dict
 
     # --------------------- whois details ----------------------
     # ["expiration_date", "registrar"]
+    # not testing the following code since it's merely getting fields from the whois result
     def get_expiration_date(self) -> str:
+        """
+        Util for getting the expiration date for the searched domain
+        :return: The string format for the expiration date
+        :rtype: str
+        """
         whois_result = self.search_whois()
         return whois_result["expiration_date"]
 
     def get_registrar(self) -> str:
+        """
+        Util for getting the registrar for the searched domain
+        :return: The DNS registrar
+        :rtype: str
+        """
         whois_result = self.search_whois()
         return whois_result["registrar"]
 
 
 def main():
     toolbox = DNSToolBox()
-    toolbox.set_domain_string(input("Enter Domain Name: "))
-    # while True:
-    #     test_site = input("Enter Domain Name: ")
-    #     toolbox.set_domain_string(test_site)
-    #     finished_record_type = ["a", "aaaa", "mx", "txt", "soa", "www"]
-    #     for dns_record_type in finished_record_type:
-    #         result = toolbox.get_result(dns_record_type)
-    #         print(f"{dns_record_type}: {result}\n")
-    #
-    #     if input("Do you want to continue? (y/n)").lower() == "n":
-    #         break
-    # for cname_type in ["auto", "msoid", "lync"]:
-    #     print(toolbox.search_cname(cname_type))
+    while True:
+        test_site = input("Enter Domain Name: ")
+        toolbox.set_domain_string(test_site)
+        finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4"]  # , "ipv6"]
+        for dns_record_type in finished_record_type:
+            result = toolbox.get_result(dns_record_type)
+            print(f"{dns_record_type}: {result}\n")
+
+        print(f"registrar: {toolbox.get_registrar()}\n")
+        print(f"expiration date: {toolbox.get_expiration_date()}\n")
+
+        pprint(f"asn: {toolbox.get_asn_result()}")
+        if input("Do you want to continue? (y/n)").lower() == "n":
+            break
 
 
 if __name__ == "__main__":
