@@ -1,6 +1,9 @@
 """DNS Tool Box"""
 import re
+from http.client import HTTPSConnection
 from pprint import pprint
+from urllib.parse import urlparse
+
 import dns.resolver
 import dns.exception
 import socket
@@ -276,6 +279,25 @@ class DNSToolBox:
         whois_result = self.search_whois()
         return whois_result["registrar"]
 
+    # -------------------- Comparison ------------------------------
+
+    def has_https(self) -> bool:
+        """
+        Util for checking the whether the domain has https
+        :return: True if https exists, otherwise False
+        :rtype: bool
+        """
+        https_url = f'https://{self._domain_string}' if self.get_result(
+            "www") == "" else f'https://{self.get_result("www")}'
+        try:
+            https_url = urlparse(https_url)
+            connection = HTTPSConnection(https_url.netloc, timeout=2)
+            connection.request('HEAD', https_url.path)
+            return True if connection.getresponse() else False
+        except Exception as error:
+            print(f"{error=}")
+            return False
+
 
 def main():
     toolbox = DNSToolBox()
@@ -291,6 +313,7 @@ def main():
         print(f"expiration date: {toolbox.get_expiration_date()}\n")
 
         pprint(f"asn: {toolbox.get_asn_result()}")
+        print(toolbox.has_https())
         if input("Do you want to continue? (y/n)").lower() == "n":
             break
 
