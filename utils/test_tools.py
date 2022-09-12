@@ -35,13 +35,20 @@ class TestDNSToolBox:
         self.TEST_TOOLBOX.set_domain_string("sdfasdfsdfsdf")
         self.TEST_TOOLBOX.get_result("A")
 
+    @pytest.mark.xfail(raises=TypeError)
+    def test_search_whois_wrong_domain_string(self):
+        self.TEST_TOOLBOX.set_domain_string("aegdsfg")
+        self.TEST_TOOLBOX.search_whois()
+
     # ----------------------- different input type test ------------------------------
     @pytest.mark.parametrize("test_input, expected", [
         pytest.param("a", "93.184.216.34"),
         pytest.param("aaaa", "2606:2800:220:1:248:1893:25c8:1946"),
         pytest.param("www", "www.example.com"),
         pytest.param("mx", "0 ."),
-        pytest.param("soa", "ns.icann.org. noc.dns.icann.org. 2022090401 7200 3600 1209600 3600")
+        pytest.param("soa", "ns.icann.org. noc.dns.icann.org. 2022091101 7200 3600 1209600 3600"),
+        # pytest.param("ns", ['b.iana-servers.net', 'a.iana-servers.net']),
+        # pytest.param("txt", ['"v=spf1 -all"', '"wgyf8z8cgvm2qmxpnbnldrcltvk4xqfn"'])
     ])
     def test_get_result(self, test_input, expected):
         self.TEST_TOOLBOX.set_domain_string(self.TEST_DOMAIN)
