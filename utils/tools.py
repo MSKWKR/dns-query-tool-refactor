@@ -21,6 +21,19 @@ class DNSToolBox:
         """Initializes class attribute"""
         self._domain_string = None
         self._res = dns.resolver.Resolver()
+        self._whois_result = self.search_whois()
+
+    @classmethod
+    def strip_last_dot(cls, addr: str) -> str:
+        """
+        Util function that strips the last dot from an address (if any)
+        :param addr: The Address returned by search
+        :type: str
+
+        :return: The adjusted address
+        :rtype: str
+        """
+        return addr[:-1] if addr.endswith('.') else addr
 
     @classmethod
     def parse_raw_domain(cls, input_domain: str) -> str:
@@ -92,7 +105,7 @@ class DNSToolBox:
         try:
             # this shouldn't be the correct way, what if my input domain is 'www.example.com'?
             # would cause an error
-            answers = dns.resolver.resolve("www." + self._domain_string, "A")
+            answers = self._res.resolve("www." + self._domain_string, "A")
             if answers:
                 return answers
             else:
@@ -117,31 +130,31 @@ class DNSToolBox:
             print(f"{error=}")
             return None
 
-    def search_cname(self, o365_record_type: str) -> str:
-        record_type = o365_record_type.lower()
-        match record_type:
-            case "auto":
-                search_string = f"autodiscover.{self._domain_string}"
-                regex_comparison_pattern = r"autodiscover.outlook.com"
-            case "msoid":
-                search_string = f"msoid.{self._domain_string}"
-                regex_comparison_pattern = r"clientconfig.microsoftonline-p.net"
-            case "lync":
-                search_string = f"lyncdiscover.{self._domain_string}"
-                regex_comparison_pattern = r"webdir.online.lync.com",
+    # def search_cname(self, o365_record_type: str) -> str:
+    #     record_type = o365_record_type.lower()
+    #     match record_type:
+    #         case "auto":
+    #             search_string = f"autodiscover.{self._domain_string}"
+    #             regex_comparison_pattern = r"autodiscover.outlook.com"
+    #         case "msoid":
+    #             search_string = f"msoid.{self._domain_string}"
+    #             regex_comparison_pattern = r"clientconfig.microsoftonline-p.net"
+    #         case "lync":
+    #             search_string = f"lyncdiscover.{self._domain_string}"
+    #             regex_comparison_pattern = r"webdir.online.lync.com",
+    #
+    #     try:
+    #         cname_answers = self._res.resolve(search_string, "CNAME")
+    #         for answer in cname_answers:
+    #             if re.search(regex_comparison_pattern, str(answer)):
+    #                 return "correct"
+    #             else:
+    #                 return "misconfigured"
+    #
+    #     except Exception:
+    #         return "misconfigured"
 
-        try:
-            cname_answers = dns.resolver.resolve(search_string, "CNAME")
-            for answer in cname_answers:
-                if re.search(regex_comparison_pattern, str(answer)):
-                    return "correct"
-                else:
-                    return "misconfigured"
-
-        except Exception:
-            return "misconfigured"
-
-        # ------------------------- Fetch Result Tools ------------------------------------
+    # ------------------------- Fetch Result Tools ------------------------------------
 
     def get_result(self, record_type: str) -> Union[str, List]:
         """
@@ -159,7 +172,7 @@ class DNSToolBox:
         # turn input all to uppercase for comparison
         record_type = record_type.upper()
         match record_type:
-            case ("A" | "AAAA" | "MX" | "SOA"):
+            case ("A" | "AAAA" | "MX" | "SOA" | "NS"):
                 answers = self.search(record_type)
                 if answers:
                     # answers is an iterator of type records, need to loop through in order to get the data
@@ -172,11 +185,19 @@ class DNSToolBox:
             case "TXT":
                 answers = self.search(record_type)
                 txt_result = []
-                if not answers:
-                    return txt_result
-                for answer in answers:
-                    txt_result.append(str(answer))
+                if answers:
+                    for answer in answers:
+                        txt_result.append(str(answer))
                 return txt_result
+
+            case "NS":
+                answers = self.search(record_type)
+                ns_result = []
+                if answers:
+                    for answer in answers:
+                        ns = self.strip_last_dot(answer.target.to_text())
+                        ns_result.append(ns)
+                return ns_result
 
             case "WWW":
                 answers = self.search_www()
@@ -211,20 +232,30 @@ class DNSToolBox:
             case _:
                 pass
 
+    # --------------------- whois details ----------------------
+    # ["expiration_date", "registrar"]
+    def get_expiration_date(self) -> str:
+        whois_result = self.search_whois()
+        return whois_result["expiration_date"]
+
+    def get_registrar(self) -> str:
+        whois_result = self.search_whois()
+        return whois_result["registrar"]
+
 
 def main():
     toolbox = DNSToolBox()
-    toolbox.set_domain_string("freedom.net.tw")
-    while True:
-        test_site = input("Enter Domain Name: ")
-        toolbox.set_domain_string(test_site)
-        finished_record_type = ["a", "aaaa", "mx", "txt", "soa", "www"]
-        for dns_record_type in finished_record_type:
-            result = toolbox.get_result(dns_record_type)
-            print(f"{dns_record_type}: {result}\n")
-
-        if input("Do you want to continue? (y/n)").lower() == "n":
-            break
+    toolbox.set_domain_string(input("Enter Domain Name: "))
+    # while True:
+    #     test_site = input("Enter Domain Name: ")
+    #     toolbox.set_domain_string(test_site)
+    #     finished_record_type = ["a", "aaaa", "mx", "txt", "soa", "www"]
+    #     for dns_record_type in finished_record_type:
+    #         result = toolbox.get_result(dns_record_type)
+    #         print(f"{dns_record_type}: {result}\n")
+    #
+    #     if input("Do you want to continue? (y/n)").lower() == "n":
+    #         break
     # for cname_type in ["auto", "msoid", "lync"]:
     #     print(toolbox.search_cname(cname_type))
 
