@@ -1,16 +1,16 @@
 """DNS Tool Box"""
 import re
-from http.client import HTTPSConnection
-from pprint import pprint
-from urllib.parse import urlparse
+from typing import Union, List, Any
 
+import http.client
+from urllib.parse import urlparse
 import dns.resolver
 import dns.exception
 import socket
-from typing import Union, List
 import whois
 from ipwhois.net import Net
 from ipwhois.asn import IPASN
+import pydnsbl
 
 
 class DNSToolBox:
@@ -23,6 +23,7 @@ class DNSToolBox:
         """Initializes class attribute"""
         self._domain_string = None
         self._res = dns.resolver.Resolver()
+        self._domain_checker = pydnsbl.DNSBLDomainChecker()
 
     @classmethod
     def strip_last_dot(cls, addr: str) -> str:
@@ -127,8 +128,8 @@ class DNSToolBox:
         try:
             whois_result = whois.whois(self._domain_string)
             return whois_result
-        except TypeError as error:
-            print(f"{error=}")
+        # Handle TypeError by returning None
+        except TypeError:
             return None
 
     @classmethod
@@ -138,7 +139,8 @@ class DNSToolBox:
         :param ip_address: An IPv4 or IPv6 string
         :type: str
 
-        :return: An ASN dictionary after parsing with the given ip address, returns an empty dictionary if not found
+        :return: An ASN dictionary after parsing with the given ip address,
+                 returns an empty dictionary if not found
         :rtype: dict
         """
         # default an empty dictionary
@@ -151,9 +153,14 @@ class DNSToolBox:
             asn_results = object_.lookup(ip_address)
             return asn_results
 
-        except ValueError as error:
-            print(f"{error=}")
+        # Catches ValueError when ip isn't correct
+        except ValueError:
             return asn_results
+
+    # Domain Name System Blacklists
+    def search_dnsbl(self) -> Any:
+        dnsbl_result = self._domain_checker.check(self._domain_string)
+        return dnsbl_result
 
     # ------------------------- Fetch Result Tools ------------------------------------
 
@@ -280,28 +287,44 @@ class DNSToolBox:
         return whois_result["registrar"]
 
     # -------------------- Comparison ------------------------------
-
+    # check 'oldfunshinymelody.neverssl.com' for None SSL
     def has_https(self) -> bool:
         """
         Util for checking the whether the domain has https
         :return: True if https exists, otherwise False
         :rtype: bool
         """
-        https_url = f'https://{self._domain_string}' if self.get_result(
-            "www") == "" else f'https://{self.get_result("www")}'
+        # check whether the input site is a www domain
         try:
+            https_url = f'https://{self._domain_string}' if self.get_result(
+                "www") == "" else f'https://{self.get_result("www")}'
+
             https_url = urlparse(https_url)
-            connection = HTTPSConnection(https_url.netloc, timeout=2)
+            connection = http.client.HTTPSConnection(https_url.netloc, timeout=2)
             connection.request('HEAD', https_url.path)
             return True if connection.getresponse() else False
-        except Exception as error:
+
+        except http.client.HTTPException as error:
             print(f"{error=}")
             return False
 
+        except BaseException as error:
+            print(f"{error=}")
+            return False
 
-def main():
+        finally:  # always close the connection
+            connection.close()
+
+    # def is_blacklisted(self) -> bool:
+    #     dnsbl = self.search_dnsbl()
+    #     print(dnsbl.detected_by)
+    #     return dnsbl.blacklisted
+
+
+def _main():
     toolbox = DNSToolBox()
-    while True:
+    continue_ = True
+    while continue_:
         test_site = input("Enter Domain Name: ")
         toolbox.set_domain_string(test_site)
         finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4"]  # , "ipv6"]
@@ -312,11 +335,13 @@ def main():
         print(f"registrar: {toolbox.get_registrar()}\n")
         print(f"expiration date: {toolbox.get_expiration_date()}\n")
 
-        pprint(f"asn: {toolbox.get_asn_result()}")
-        print(toolbox.has_https())
+        print(f"asn: {toolbox.get_asn_result()}\n")
+        print(f"has_https: {toolbox.has_https()}\n")
+        print(f"is_blacklisted: {toolbox.is_blacklisted()}\n")
+
         if input("Do you want to continue? (y/n)").lower() == "n":
-            break
+            continue_ = False
 
 
 if __name__ == "__main__":
-    main()
+    _main()
