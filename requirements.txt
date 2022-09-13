@@ -4,3 +4,4 @@ whois==0.9.16
 
 ipwhois~=1.2.0
 pydnsbl~=1.1.4
+requests~=2.28.1
