@@ -12,6 +12,7 @@ from ipwhois.asn import IPASN
 from ipwhois.net import Net
 
 import blacklist_checker
+from constants import EMAIL_TABLE
 
 
 class DNSToolBox:
@@ -176,7 +177,7 @@ class DNSToolBox:
         # turn input all to uppercase for comparison
         record_type = record_type.upper()
         match record_type:
-            case ("A" | "AAAA" | "MX" | "SOA"):
+            case ("A" | "AAAA" | "SOA" | "MX"):
                 answers = self.search(record_type)
                 if answers:
                     # answers is an iterator of type records, need to loop through in order to get the data
@@ -264,7 +265,8 @@ class DNSToolBox:
     # --------------------- whois details ----------------------
     # ["expiration_date", "registrar"]
     # not testing the following code since it's merely getting fields from the whois result
-    def get_expiration_date(self) -> str:
+    @property
+    def expiration_date(self) -> str:
         """
         Util for getting the expiration date for the searched domain
         :return: The string format for the expiration date
@@ -273,7 +275,8 @@ class DNSToolBox:
         whois_result = self.search_whois()
         return whois_result["expiration_date"]
 
-    def get_registrar(self) -> str:
+    @property
+    def registrar(self) -> str:
         """
         Util for getting the registrar for the searched domain
         :return: The DNS registrar
@@ -281,6 +284,16 @@ class DNSToolBox:
         """
         whois_result = self.search_whois()
         return whois_result["registrar"]
+
+    # ---------------------- Email Provider ------------------------
+
+    def email_provider(self) -> str:
+        mx_record = self.get_result("mx")
+        if len(mx_record) != 0:
+            # check if the smtp domain name is within the mx string
+            for domain in EMAIL_TABLE:
+                if domain in mx_record:
+                    return EMAIL_TABLE[domain]
 
     # -------------------- Comparison ------------------------------
     # check 'oldfunshinymelody.neverssl.com' for None SSL
@@ -326,12 +339,13 @@ def _main():
             result = toolbox.get_result(dns_record_type)
             print(f"{dns_record_type}: {result}\n")
 
-        print(f"registrar: {toolbox.get_registrar()}\n")
-        print(f"expiration date: {toolbox.get_expiration_date()}\n")
+        print(f"registrar: {toolbox.registrar}\n")
+        print(f"expiration date: {toolbox.expiration_date}\n")
 
         print(f"asn: {toolbox.get_asn_result()}\n")
         print(f"has_https: {toolbox.has_https()}\n")
-        print(f"is_blacklisted: {toolbox.is_blacklisted()}\n")
+        print(f"is_blacklisted: {toolbox.is_black_listed()}\n")
+        print(f"email_provider: {toolbox.email_provider()}")
 
         if input("Do you want to continue? (y/n)").lower() == "n":
             continue_ = False
