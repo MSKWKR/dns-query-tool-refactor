@@ -1,16 +1,17 @@
 """DNS Tool Box"""
-import re
-from typing import Union, List, Any
-
 import http.client
-from urllib.parse import urlparse
-import dns.resolver
-import dns.exception
+import re
 import socket
+from typing import Union, List
+from urllib.parse import urlparse
+
+import dns.exception
+import dns.resolver
 import whois
-from ipwhois.net import Net
 from ipwhois.asn import IPASN
-import pydnsbl
+from ipwhois.net import Net
+
+import blacklist_checker
 
 
 class DNSToolBox:
@@ -23,7 +24,7 @@ class DNSToolBox:
         """Initializes class attribute"""
         self._domain_string = None
         self._res = dns.resolver.Resolver()
-        self._domain_checker = pydnsbl.DNSBLDomainChecker()
+        self._black_list_checker = blacklist_checker.BlackListChecker()
 
     @classmethod
     def strip_last_dot(cls, addr: str) -> str:
@@ -156,11 +157,6 @@ class DNSToolBox:
         # Catches ValueError when ip isn't correct
         except ValueError:
             return asn_results
-
-    # Domain Name System Blacklists
-    def search_dnsbl(self) -> Any:
-        dnsbl_result = self._domain_checker.check(self._domain_string)
-        return dnsbl_result
 
     # ------------------------- Fetch Result Tools ------------------------------------
 
@@ -315,10 +311,8 @@ class DNSToolBox:
         finally:  # always close the connection
             connection.close()
 
-    # def is_blacklisted(self) -> bool:
-    #     dnsbl = self.search_dnsbl()
-    #     print(dnsbl.detected_by)
-    #     return dnsbl.blacklisted
+    def is_black_listed(self) -> bool:
+        return self._black_list_checker.is_black_listed(self._domain_string)
 
 
 def _main():
