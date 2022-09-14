@@ -67,20 +67,6 @@ class DNSToolBox:
         self._domain_string = DNSToolBox.parse_raw_domain(domain_string)
         return self._domain_string
 
-    # def domain_status(self) -> str:
-    #     """
-    #     Function domain_status retrieve status code
-    #     :return: Status String
-    #     :rtype str
-    #     """
-    #     if not self.search_www():
-    #         status_code = requests.get(f"https://{self._domain_string}").status_code
-    #     else:
-    #         domain_string = self.get_result("www")
-    #         status_code = requests.get(f"https://{domain_string}").status_code
-    #
-    #     return str(status_code)
-
     # ------------------------- Search Tools ------------------------------------
     def search(self, record_type: str) -> Union[dns.resolver.Resolver, None]:
         """
@@ -290,7 +276,8 @@ class DNSToolBox:
 
     # Since the tool wants the specific field for the ASN,
     # this is dirty code that I didn't change much
-    def get_asn_result(self) -> dict:
+    @property
+    def asn(self) -> dict:
         """
         Function for reading the ASN result parsed from search_ipwhois_asn(),
         will leave all the fields empty if the ip list is empty
@@ -348,10 +335,11 @@ class DNSToolBox:
         xfr_list = []
         try:
             soa_answer = self.search("soa")
-            master_answer = dns.resolver.resolve(soa_answer[0].mname, "A")
-            zone = dns.zone.from_xfr(dns.query.xfr(master_answer[0].address, self._domain_string))
-            for n in sorted(zone.nodes.keys()):
-                xfr_list.append(zone[n].to_text(n))
+            if soa_answer:
+                master_answer = dns.resolver.resolve(soa_answer[0].mname, "A")
+                zone = dns.zone.from_xfr(dns.query.xfr(master_answer[0].address, self._domain_string))
+                for n in sorted(zone.nodes.keys()):
+                    xfr_list.append(zone[n].to_text(n))
         except (EOFError, dns.query.TransferError) as error:
             print(f"{error=}")
 
@@ -367,9 +355,9 @@ class DNSToolBox:
         try:
             address = dns.reversename.from_address(self.get_result("a"))
             return dns.resolver.resolve(str(address), "PTR")[0]
-        except dns.resolver.NXDOMAIN as error:
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer) as error:
             print(f"{error=}")
-            return
+            return ""
 
     # --------------------- whois details ----------------------
     # ["expiration_date", "registrar"]
@@ -404,6 +392,8 @@ class DNSToolBox:
                 if domain in mx_record:
                     return EMAIL_TABLE[domain]
 
+        return ""
+
     # -------------------- Comparison ------------------------------
     # check 'oldfunshinymelody.neverssl.com' for None SSL
     def has_https(self) -> bool:
@@ -436,6 +426,10 @@ class DNSToolBox:
     def is_black_listed(self) -> bool:
         return self._black_list_checker.is_black_listed(self._domain_string)
 
+    def ns_nested_in_ip(self) -> bool:
+        ns_list = self.get_result("ns")
+        ipv4_list = self.get_result("ipv4")
+
 
 def _main():
     toolbox = DNSToolBox()
@@ -447,14 +441,16 @@ def _main():
         for dns_record_type in finished_record_type:
             result = toolbox.get_result(dns_record_type)
             print(f"{YELLOW_TITLE}{dns_record_type}:{BLANK_CUT} {result}\n")
-        print(f"{YELLOW_TITLE}asn:{BLANK_CUT} {toolbox.get_asn_result()}\n")
+
+        print(f"{YELLOW_TITLE}asn:{BLANK_CUT} {toolbox.asn}\n")
+        print(f"{YELLOW_TITLE}xfr:{BLANK_CUT} {toolbox.xfr}\n")
+        print(f"{YELLOW_TITLE}ptr:{BLANK_CUT} {toolbox.ptr}\n")
         print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
         print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
         print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
+
         print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
         print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
-        print(f"{YELLOW_TITLE}xfr:{BLANK_CUT} {toolbox.xfr}\n")
-        print(f"{YELLOW_TITLE}ptr:{BLANK_CUT} {toolbox.ptr}\n")
 
         # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}")
         if input("Do you want to continue? (y/n)").lower() == "n":
