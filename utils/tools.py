@@ -2,11 +2,12 @@
 import http.client
 import re
 import socket
-from typing import Union, List
+from typing import Union, List, Dict
 from urllib.parse import urlparse
 
 import dns.exception
 import dns.resolver
+import dns.zone
 import whois
 from ipwhois.asn import IPASN
 from ipwhois.net import Net
@@ -135,7 +136,7 @@ class DNSToolBox:
             return None
 
     @classmethod
-    def search_ipwhois_asn(cls, ip_address: str) -> dict:
+    def search_ipwhois_asn(cls, ip_address: str) -> Dict:
         """
         Util function that searches the ASN records with the given IP
         :param ip_address: An IPv4 or IPv6 string
@@ -160,6 +161,13 @@ class DNSToolBox:
             return asn_results
 
     def search_srv_udp(self) -> List[str]:
+        """
+        Util function for searching srv records for udp
+
+        :return: The searched srv records
+        :rtype: List[str]
+        """
+
         srv_udp_list = []
         for n in range(len(SRV_LIST)):
             try:
@@ -174,6 +182,12 @@ class DNSToolBox:
         return srv_udp_list
 
     def search_srv_tcp(self) -> str:
+        """
+        Util function for searching srv records for tcp
+
+        :return: The searched srv records
+        :rtype: List[str]
+        """
         srv_tcp_list = []
 
         for n in range(len(SRV_LIST)):
@@ -191,6 +205,12 @@ class DNSToolBox:
         return srv_tcp_list
 
     def search_srv_tls(self) -> str:
+        """
+        Util function for searching srv records for tls
+
+        :return: The searched srv records
+        :rtype: List[str]
+        """
         srv_tls_list = []
         for n in range(len(SRV_LIST)):
             try:
@@ -309,6 +329,11 @@ class DNSToolBox:
 
     @property
     def srv(self) -> dict:
+        """
+        Util for getting the srv record for the searched domain
+        :return: The dictionary for the SRV records with field udp, tcp and tls
+        :rtype: dict
+        """
 
         srv_result_dict = {
             "UDP": self.search_srv_udp(),
@@ -317,6 +342,34 @@ class DNSToolBox:
         }
 
         return srv_result_dict
+
+    @property
+    def xfr(self) -> List[str]:
+        xfr_list = []
+        try:
+            soa_answer = self.search("soa")
+            master_answer = dns.resolver.resolve(soa_answer[0].mname, "A")
+            zone = dns.zone.from_xfr(dns.query.xfr(master_answer[0].address, self._domain_string))
+            for n in sorted(zone.nodes.keys()):
+                xfr_list.append(zone[n].to_text(n))
+        except (EOFError, dns.query.TransferError) as error:
+            print(f"{error=}")
+
+        return xfr_list
+
+    @property
+    def ptr(self) -> str:
+        """
+        Util function for getting the ptr record using reverse query
+
+        :return: The PTR record
+        """
+        try:
+            address = dns.reversename.from_address(self.get_result("a"))
+            return dns.resolver.resolve(str(address), "PTR")[0]
+        except dns.resolver.NXDOMAIN as error:
+            print(f"{error=}")
+            return
 
     # --------------------- whois details ----------------------
     # ["expiration_date", "registrar"]
@@ -400,8 +453,10 @@ def _main():
         print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
         print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
         print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
+        print(f"{YELLOW_TITLE}xfr:{BLANK_CUT} {toolbox.xfr}\n")
+        print(f"{YELLOW_TITLE}ptr:{BLANK_CUT} {toolbox.ptr}\n")
 
-        print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}")
+        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}")
         if input("Do you want to continue? (y/n)").lower() == "n":
             continue_ = False
 
