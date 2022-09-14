@@ -76,8 +76,8 @@ class DNSToolBox:
     # ------------------------- Search Tools ------------------------------------
     def search(self, record_type: str) -> Union[dns.resolver.Resolver, None]:
         """
-        The method search with type is a generic function
-        wraps search of the given record type and teh exceptions.
+        The method search with the record type is a generic function
+        that wraps the search of the given record type and the exceptions.
         :param record_type: The specific type we want to search for the domain
         :type: str
 
@@ -152,7 +152,16 @@ class DNSToolBox:
         except ValueError:
             return asn_results
 
-    def search_o365(self, record_type: str):
+    def search_o365(self, record_type: str) -> Union[dns.resolver.Resolver, None]:
+        """
+        The method search_o365 with record type is a generic function
+        that wraps the search of the given record type and the exceptions.
+        :param record_type: The specific o365 record type we want to search for the domain
+        :type: str
+
+        :return: The answers by searching the given url with A Record type, None if not found
+        :rtype dns.resolver.Resolver or None
+        """
         answers = None
         try:
             match record_type:
@@ -314,6 +323,16 @@ class DNSToolBox:
                 raise NameError(f"Record Type Input Error: {record_type}")
 
     def get_o365_result(self, record_type: str) -> bool:
+        """
+        Util for checking if the o365 record type exists.
+
+        :param record_type: o365 record type
+        :type: str
+
+        :return: True if record type exists else False
+        :rtype: bool
+        """
+
         answers = self.search_o365(record_type)
         o365_pattern_dict = {
             # o365 type, regex pattern
