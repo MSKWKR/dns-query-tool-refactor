@@ -152,6 +152,40 @@ class DNSToolBox:
         except ValueError:
             return asn_results
 
+    def search_o365(self, record_type: str):
+        answers = None
+        try:
+            match record_type:
+                case "auto":
+                    answers = dns.resolver.resolve("autodiscover." + self._domain_string, "CNAME")
+
+                case "msoid":
+                    answers = dns.resolver.resolve("msoid." + self._domain_string, "CNAME")
+
+                case "lync":
+                    answers = dns.resolver.resolve("lyncdiscover." + self._domain_string, "CNAME")
+
+                case "365mx":
+                    answers = dns.resolver.resolve(self._domain_string, "MX")
+
+                case "spf":
+                    answers = dns.resolver.resolve(self._domain_string, "txt")
+
+                case "sipdir":
+                    answers = dns.resolver.resolve("_sip._tls." + self._domain_string, "SRV")
+
+                case "sipfed":
+                    answers = dns.resolver.resolve("_sipfederationtls._tcp." + self._domain_string, "SRV")
+
+                case _:
+                    raise NameError(f"o365 Record Type Input Error: {record_type}")
+
+        except (dns.resolver.NXDOMAIN
+                , dns.resolver.NoAnswer, dns.resolver.NoNameservers) as error:
+            print(f"{error=}")
+
+        return answers
+
     def search_srv_udp(self) -> List[str]:
         """
         Util function for searching srv records for udp
@@ -163,7 +197,7 @@ class DNSToolBox:
         srv_udp_list = []
         for n in range(len(SRV_LIST)):
             try:
-                udp_record = dns.resolver.resolve("_" + SRV_LIST[n] + "._udp." + self._domain_string, "SRV")
+                udp_record = dns.resolver.resolve(f"_{SRV_LIST[n]}._udp.{self._domain_string}", "SRV")
                 for data in udp_record:
                     srv_udp_list.append(data.to_text())
 
@@ -184,7 +218,7 @@ class DNSToolBox:
 
         for n in range(len(SRV_LIST)):
             try:
-                tcp_record = dns.resolver.resolve("_" + SRV_LIST[n] + "._tcp." + self._domain_string, "SRV")
+                tcp_record = dns.resolver.resolve(f"_{SRV_LIST[n]}._tcp.{self._domain_string}", "SRV")
 
                 for data in tcp_record:
                     srv_tcp_list.append(data.to_text())
@@ -206,7 +240,7 @@ class DNSToolBox:
         srv_tls_list = []
         for n in range(len(SRV_LIST)):
             try:
-                tls_record = dns.resolver.resolve("_" + SRV_LIST[n] + "._tls." + self._domain_string, "SRV")
+                tls_record = dns.resolver.resolve(f"_{SRV_LIST[n]}._tls.{self._domain_string}", "SRV")
                 for data in tls_record:
                     srv_tls_list.append(data.to_text())
 
@@ -230,8 +264,7 @@ class DNSToolBox:
         :return: The transformed search result
         :rtype: str, List
         """
-        # print(f"{record_type:}")
-        # turn input all to uppercase for comparison
+
         record_type = record_type.upper()
         match record_type:
             case ("A" | "AAAA" | "SOA" | "MX"):
@@ -279,6 +312,41 @@ class DNSToolBox:
 
             case _:
                 raise NameError(f"Record Type Input Error: {record_type}")
+
+    def get_o365_result(self, record_type: str) -> bool:
+        answers = self.search_o365(record_type)
+        o365_pattern_dict = {
+            # o365 type, regex pattern
+            "auto": r"autodiscover.outlook.com",
+            "msoid": r"clientconfig.microsoftonline-p.net",
+            "lync": r"webdir.online.lync.com",
+            "365mx": (r"mail.protection.outlook.com", r"protection.outlook.com"),
+            "spf": r"include:spf.protection.outlook.com"
+        }
+        match record_type:
+
+            case "auto" | "msoid" | "lync" | "spf":
+                if answers:
+                    for answer in answers:
+                        if re.search(o365_pattern_dict[record_type], str(answer)):
+                            return True
+                return False
+
+            case "365mx":
+                if answers:
+                    for answer in answers:
+                        if re.search(o365_pattern_dict[record_type][0], str(answer)):
+                            return True
+                        elif re.search(o365_pattern_dict[record_type][1], str(answer)):
+                            print("need update")
+                            return True
+                return False
+
+            case "sipdir":
+                return True if answers else False
+
+            case "sipfed":
+                return True if answers else False
 
     # Since the tool wants the specific field for the ASN,
     # this is dirty code that I didn't change much
@@ -346,7 +414,9 @@ class DNSToolBox:
                 zone = dns.zone.from_xfr(dns.query.xfr(master_answer[0].address, self._domain_string))
                 for n in sorted(zone.nodes.keys()):
                     xfr_list.append(zone[n].to_text(n))
-        except (EOFError, dns.query.TransferError) as error:
+        except (
+                EOFError, dns.query.TransferError, ConnectionResetError,
+                dns.exception.FormError, TimeoutError) as error:
             print(f"{error=}")
 
         return xfr_list
@@ -454,7 +524,12 @@ def _main():
         print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
         print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
         print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
-        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}")
+        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
+
+        o365_types = ["auto", "msoid", "lync", "365mx", "spf", "sipdir", "sipfed"]
+        for o365_type in o365_types:
+            o365_result = toolbox.get_o365_result(o365_type)
+            print(f"{YELLOW_TITLE}{o365_type}:{BLANK_CUT} {o365_result}\n")
 
         print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
         print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
