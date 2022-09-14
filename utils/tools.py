@@ -12,7 +12,7 @@ from ipwhois.asn import IPASN
 from ipwhois.net import Net
 
 import blacklist_checker
-from constants import EMAIL_TABLE
+from constants import EMAIL_TABLE, SRV_LIST, YELLOW_TITLE, BLANK_CUT
 
 
 class DNSToolBox:
@@ -159,6 +159,51 @@ class DNSToolBox:
         except ValueError:
             return asn_results
 
+    def search_srv_udp(self) -> List[str]:
+        srv_udp_list = []
+        for n in range(len(SRV_LIST)):
+            try:
+                udp_record = dns.resolver.resolve("_" + SRV_LIST[n] + "._udp." + self._domain_string, "SRV")
+                for data in udp_record:
+                    srv_udp_list.append(data.to_text())
+
+            except (dns.resolver.NXDOMAIN, dns.exception.Timeout, dns.resolver.NoAnswer,
+                    dns.resolver.NoNameservers) as error:
+                # print(f"{error=}")
+                pass
+        return srv_udp_list
+
+    def search_srv_tcp(self) -> str:
+        srv_tcp_list = []
+
+        for n in range(len(SRV_LIST)):
+            try:
+                tcp_record = dns.resolver.resolve("_" + SRV_LIST[n] + "._tcp." + self._domain_string, "SRV")
+
+                for data in tcp_record:
+                    srv_tcp_list.append(data.to_text())
+
+            except (dns.resolver.NXDOMAIN, dns.exception.Timeout, dns.resolver.NoAnswer,
+                    dns.resolver.NoNameservers) as error:
+                # print(f"{error=}")
+                pass
+
+        return srv_tcp_list
+
+    def search_srv_tls(self) -> str:
+        srv_tls_list = []
+        for n in range(len(SRV_LIST)):
+            try:
+                tls_record = dns.resolver.resolve("_" + SRV_LIST[n] + "._tls." + self._domain_string, "SRV")
+                for data in tls_record:
+                    srv_tls_list.append(data.to_text())
+
+            except (dns.resolver.NXDOMAIN, dns.exception.Timeout, dns.resolver.NoAnswer,
+                    dns.resolver.NoNameservers) as error:
+                # print(f"{error=}")
+                pass
+        return srv_tls_list
+
     # ------------------------- Fetch Result Tools ------------------------------------
 
     def get_result(self, record_type: str) -> Union[str, List]:
@@ -262,6 +307,17 @@ class DNSToolBox:
 
         return asn_dict
 
+    @property
+    def srv(self) -> dict:
+
+        srv_result_dict = {
+            "UDP": self.search_srv_udp(),
+            "TCP": self.search_srv_tcp(),
+            "TLS": self.search_srv_tls()
+        }
+
+        return srv_result_dict
+
     # --------------------- whois details ----------------------
     # ["expiration_date", "registrar"]
     # not testing the following code since it's merely getting fields from the whois result
@@ -286,7 +342,7 @@ class DNSToolBox:
         return whois_result["registrar"]
 
     # ---------------------- Email Provider ------------------------
-
+    @property
     def email_provider(self) -> str:
         mx_record = self.get_result("mx")
         if len(mx_record) != 0:
@@ -337,16 +393,15 @@ def _main():
         finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4"]  # , "ipv6"]
         for dns_record_type in finished_record_type:
             result = toolbox.get_result(dns_record_type)
-            print(f"{dns_record_type}: {result}\n")
+            print(f"{YELLOW_TITLE}{dns_record_type}:{BLANK_CUT} {result}\n")
+        print(f"{YELLOW_TITLE}asn:{BLANK_CUT} {toolbox.get_asn_result()}\n")
+        print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
+        print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
+        print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
+        print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
+        print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
 
-        print(f"registrar: {toolbox.registrar}\n")
-        print(f"expiration date: {toolbox.expiration_date}\n")
-
-        print(f"asn: {toolbox.get_asn_result()}\n")
-        print(f"has_https: {toolbox.has_https()}\n")
-        print(f"is_blacklisted: {toolbox.is_black_listed()}\n")
-        print(f"email_provider: {toolbox.email_provider()}")
-
+        print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}")
         if input("Do you want to continue? (y/n)").lower() == "n":
             continue_ = False
 
