@@ -1,4 +1,5 @@
 """DNS Tool Box"""
+import datetime
 import http.client
 import re
 import socket
@@ -8,6 +9,7 @@ from urllib.parse import urlparse
 import dns.exception
 import dns.resolver
 import dns.zone
+import pytz as pytz
 import whois
 from ipwhois.asn import IPASN
 from ipwhois.net import Net
@@ -24,6 +26,7 @@ class DNSToolBox:
     # the tool is defaulted with nothing
     def __init__(self):
         """Initializes class attribute"""
+        self.check_time = datetime.datetime.now(pytz.timezone("Asia/Taipei"))
         self._domain_string = None
         self._res = dns.resolver.Resolver()
         self._black_list_checker = blacklist_checker.BlackListChecker()
@@ -448,11 +451,11 @@ def _main():
         print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
         print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
         print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
+        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}")
 
         print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
         print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
-
-        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}")
+        print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}")
         if input("Do you want to continue? (y/n)").lower() == "n":
             continue_ = False
 
