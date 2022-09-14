@@ -31,6 +31,9 @@ class DNSToolBox:
         self._res = dns.resolver.Resolver()
         self._black_list_checker = blacklist_checker.BlackListChecker()
 
+    def __repr__(self):
+        return f"DNSToolBox{self._domain_string}"
+
     @classmethod
     def strip_last_dot(cls, addr: str) -> str:
         """
