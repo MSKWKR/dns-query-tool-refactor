@@ -87,16 +87,18 @@ class BlackListChecker:
         """
         site_statuses = {}
         black_listed_provider = {}
-
-        virus_total_result = self.search_virus_total(url)
-        for provider in virus_total_result["data"]["attributes"]["last_analysis_results"]:
-            site_result = virus_total_result["data"]["attributes"]["last_analysis_results"][provider]
-            site_status = site_result["result"]
-            # All providers status
-            site_statuses[provider] = site_status
-            # Black Listed providers
-            if site_status not in ("clean", "unrated"):
-                black_listed_provider[provider] = site_status
+        try:
+            virus_total_result = self.search_virus_total(url)
+            for provider in virus_total_result["data"]["attributes"]["last_analysis_results"]:
+                site_result = virus_total_result["data"]["attributes"]["last_analysis_results"][provider]
+                site_status = site_result["result"]
+                # All providers status
+                site_statuses[provider] = site_status
+                # Black Listed providers
+                if site_status not in ("clean", "unrated"):
+                    black_listed_provider[provider] = site_status
+        except KeyError as error:
+            print(f"{error=}")
 
         return site_statuses, black_listed_provider
 
