@@ -48,6 +48,7 @@ class DNSToolBox:
     def strip_last_dot(cls, addr: str) -> str:
         """
         Util function that strips the last dot from an address (if any)
+
         :param addr: The Address returned by search
         :type: str
 
@@ -60,6 +61,7 @@ class DNSToolBox:
     def parse_raw_domain(cls, input_domain: str) -> str | None:
         """
         Method parse_raw_domain cleans the input domain and return the domain name
+
         :param input_domain: Raw input domain, might have error key-in symbols
         :type: str
 
@@ -77,7 +79,9 @@ class DNSToolBox:
         return input_domain
 
     def set_domain_string(self, domain_string: str) -> str:
-        """Set_domain_string parses, initialize and return the pure domain string
+        """
+        Set_domain_string parses, initialize and return the pure domain string
+
         :param domain_string: The original input string(unparsed)
         :type: str
 
@@ -110,6 +114,7 @@ class DNSToolBox:
     def search_www(self) -> dns.resolver.Resolver | None:
         """
         Search_www check www domain by checking it's A Record.
+
         :return: The answers by searching the given url with A Record type, None if not found
         :rtype dns.resolver.Resolver or None
         """
@@ -128,6 +133,7 @@ class DNSToolBox:
     def search_whois(self) -> whois.parser.WhoisTw | None:
         """
         Query a WHOIS server directly and return the parsed whois data.
+
         :return: The result for parsing the WHOIS data, None if not found
         :rtype whois.parser.WhoisTw, None
         """
@@ -143,6 +149,7 @@ class DNSToolBox:
     def search_ipwhois_asn(cls, ip_address: str) -> dict[any]:
         """
         Util function that searches the ASN records with the given IP
+
         :param ip_address: An IPv4 or IPv6 string
         :type: str
 
@@ -210,7 +217,8 @@ class DNSToolBox:
 
     def get_srv_results(self, proto="tcp") -> List[str]:
         """
-            Util function for searching srv records for with the given protocol name. default to tcp.
+            Util function for searching srv records for with the given protocol name, default to tcp.
+
             :return: The searched srv records
             :rtype: List[str]
         """
@@ -401,6 +409,7 @@ class DNSToolBox:
     def srv(self) -> dict[str: List[str]]:
         """
         Util for getting the srv record for the searched domain
+
         :return: The dictionary for the SRV records with field udp, tcp and tls
         :rtype: dict
         """
@@ -449,6 +458,7 @@ class DNSToolBox:
     def expiration_date(self) -> str:
         """
         Util for getting the expiration date for the searched domain
+
         :return: The string format for the expiration date
         :rtype: str
         """
@@ -461,6 +471,7 @@ class DNSToolBox:
     def registrar(self) -> str:
         """
         Util for getting the registrar for the searched domain
+
         :return: The DNS registrar
         :rtype: str
         """
@@ -485,7 +496,8 @@ class DNSToolBox:
     # check 'oldfunshinymelody.neverssl.com' for None SSL
     def has_https(self) -> bool:
         """
-        Util for checking the whether the domain has https
+        Util for checking whether the domain has https
+
         :return: True if https exists, otherwise False
         :rtype: bool
         """
@@ -511,6 +523,12 @@ class DNSToolBox:
             connection.close()
 
     def is_black_listed(self) -> bool:
+        """
+        Util for checking whether the domain is blacklisted by any providers
+
+        :return: True if blacklisted, otherwise False
+        :rtype: bool
+        """
         return self._black_list_checker.is_black_listed(self._domain_string)
 
     def ns_nested_in_ip(self) -> bool:
