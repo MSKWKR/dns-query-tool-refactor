@@ -57,7 +57,7 @@ class DNSToolBox:
         return addr[:-1] if addr.endswith('.') else addr
 
     @classmethod
-    def parse_raw_domain(cls, input_domain: str) -> str:
+    def parse_raw_domain(cls, input_domain: str) -> str | None:
         """
         Method parse_raw_domain cleans the input domain and return the domain name
         :param input_domain: Raw input domain, might have error key-in symbols
@@ -66,9 +66,14 @@ class DNSToolBox:
         :return: The cleansed domain string
         :rtype: str
         """
-        pattern = '[^A-Za-z0-9.]'
-        input_domain = re.sub(pattern=pattern, repl="", string=input_domain)
 
+        pattern = '[^A-Za-z0-9.:/]'
+        input_domain = urlparse(re.sub(pattern=pattern, repl="", string=input_domain))
+        # doesn't strip the www
+        input_domain = input_domain.netloc or input_domain.path
+        if input_domain == "":
+            return None
+        input_domain = re.sub(r'(www.)(?!com)', r'', input_domain)
         return input_domain
 
     def set_domain_string(self, domain_string: str) -> str:
@@ -88,6 +93,7 @@ class DNSToolBox:
         """
         The method search with the record type is a generic function
         that wraps the search of the given record type and the exceptions.
+
         :param record_type: The specific type we want to search for the domain
         :type: str
 
@@ -163,6 +169,7 @@ class DNSToolBox:
         """
         The method search_o365 with record type is a generic function
         that wraps the search of the given record type and the exceptions.
+
         :param record_type: The specific o365 record type we want to search for the domain
         :type: str
 
@@ -327,7 +334,7 @@ class DNSToolBox:
 
     # ---------------------------------------------- ToolBox Properties -----------------------------------------
     @property
-    def o365_results(self) -> dict[List[str]]:
+    def o365_results(self) -> dict[str: List[str]]:
         o365_types = ["auto", "msoid", "lync", "365mx", "spf", "sipdir", "sipfed"]
         o365_results_dict = {
             "CNAME": [],
@@ -446,7 +453,9 @@ class DNSToolBox:
         :rtype: str
         """
         whois_result = self.search_whois()
-        return whois_result["expiration_date"]
+        if whois_result:
+            return whois_result["expiration_date"]
+        return ""
 
     @property
     def registrar(self) -> str:
@@ -456,7 +465,9 @@ class DNSToolBox:
         :rtype: str
         """
         whois_result = self.search_whois()
-        return whois_result["registrar"]
+        if whois_result:
+            return whois_result["registrar"]
+        return ""
 
     # ---------------------- Email Provider ------------------------
     @property
@@ -512,6 +523,7 @@ def _main():
     continue_ = True
     while continue_:
         test_site = input("Enter Domain Name: ")
+
         toolbox.set_domain_string(test_site)
         finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4", "ipv6"]
         for dns_record_type in finished_record_type:
@@ -524,7 +536,7 @@ def _main():
         print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
         print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
         print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
-        print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
+        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
 
         print(f"{YELLOW_TITLE}o365:{BLANK_CUT} {toolbox.o365_results}\n")
 
