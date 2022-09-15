@@ -27,7 +27,7 @@ ToolBoxErrors = (
 
 class DNSToolBox:
     """
-    DNSToolBox is a generic-style set that contains the method that needed to check the domain string
+    DNSToolBox is a generic-style set that contains the methods needed to check the domain string
     """
 
     # the tool is defaulted with nothing
