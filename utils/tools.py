@@ -21,7 +21,7 @@ ToolBoxErrors = (
     ValueError, TypeError, EOFError, ConnectionResetError, TimeoutError, dns.exception.FormError,
     dns.exception.SyntaxError, dns.exception.UnexpectedEnd, dns.exception.TooBig, dns.exception.Timeout,
     dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.resolver.YXDOMAIN,
-    dns.name.EmptyLabel, socket.error
+    dns.query.TransferError, dns.name.EmptyLabel, socket.error
 )
 
 
@@ -34,12 +34,15 @@ class DNSToolBox:
     def __init__(self):
         """Initializes class attribute"""
         self.check_time = datetime.datetime.now(pytz.timezone("Asia/Taipei"))
+
         self._domain_string = None
         self._res = dns.resolver.Resolver()
         self._black_list_checker = blacklist_checker.BlackListChecker()
 
     def __repr__(self):
         return f"DNSToolBox{self._domain_string}"
+
+    # ------------------------- Helper Function ------------------------------------
 
     @classmethod
     def strip_last_dot(cls, addr: str) -> str:
@@ -170,13 +173,13 @@ class DNSToolBox:
         try:
             match record_type:
                 case "auto":
-                    answers = dns.resolver.resolve("autodiscover." + self._domain_string, "CNAME")
+                    answers = dns.resolver.resolve(f"autodiscover.{self._domain_string}", "CNAME")
 
                 case "msoid":
-                    answers = dns.resolver.resolve("msoid." + self._domain_string, "CNAME")
+                    answers = dns.resolver.resolve(f"msoid.{self._domain_string}", "CNAME")
 
                 case "lync":
-                    answers = dns.resolver.resolve("lyncdiscover." + self._domain_string, "CNAME")
+                    answers = dns.resolver.resolve(f"lyncdiscover.{self._domain_string}", "CNAME")
 
                 case "365mx":
                     answers = dns.resolver.resolve(self._domain_string, "MX")
@@ -185,10 +188,10 @@ class DNSToolBox:
                     answers = dns.resolver.resolve(self._domain_string, "txt")
 
                 case "sipdir":
-                    answers = dns.resolver.resolve("_sip._tls." + self._domain_string, "SRV")
+                    answers = dns.resolver.resolve(f"_sip._tls.{self._domain_string}", "SRV")
 
                 case "sipfed":
-                    answers = dns.resolver.resolve("_sipfederationtls._tcp." + self._domain_string, "SRV")
+                    answers = dns.resolver.resolve(f"_sipfederationtls._tcp.{self._domain_string}", "SRV")
 
                 case _:
                     raise NameError(f"o365 Record Type Input Error: {record_type}")
@@ -198,7 +201,7 @@ class DNSToolBox:
 
         return answers
 
-    def search_srv(self, proto="tcp") -> List[str]:
+    def get_srv_results(self, proto="tcp") -> List[str]:
         """
             Util function for searching srv records for with the given protocol name. default to tcp.
             :return: The searched srv records
@@ -217,7 +220,7 @@ class DNSToolBox:
                 pass
         return srv_result_list
 
-    # ------------------------- Fetch Result Tools ------------------------------------
+    # ------------------------- Get Result Tools ------------------------------------
 
     def get_result(self, record_type: str) -> str | List[str]:
         """
@@ -267,10 +270,12 @@ class DNSToolBox:
                 ip_list = []
                 for ns_data in ns_list:
                     name = str(ns_data)
-                    a = dns.resolver.resolve(name, a_request_type)
-                    for a_data in a:
-                        ip_list.append(str(a_data))
-
+                    try:
+                        a = dns.resolver.resolve(name, a_request_type)
+                        for a_data in a:
+                            ip_list.append(str(a_data))
+                    except ToolBoxErrors as error:
+                        print(f"{error=}")
                 return ip_list
 
             case "WWW":
@@ -280,7 +285,7 @@ class DNSToolBox:
             case _:
                 raise NameError(f"Record Type Input Error: {record_type}")
 
-    def get_o365_result(self, record_type: str) -> bool:
+    def get_o365_result(self, record_type: str) -> str:
         """
         Util for checking if the o365 record type exists.
 
@@ -294,36 +299,56 @@ class DNSToolBox:
         answers = self.search_o365(record_type)
         o365_pattern_dict = {
             # o365 type, regex pattern
-            "auto": r"autodiscover.outlook.com",
-            "msoid": r"clientconfig.microsoftonline-p.net",
-            "lync": r"webdir.online.lync.com",
-            "365mx": (r"mail.protection.outlook.com", r"protection.outlook.com"),
-            "spf": r"include:spf.protection.outlook.com"
+            "auto": "autodiscover.outlook.com",
+            "msoid": "clientconfig.microsoftonline-p.net",
+            "lync": "webdir.online.lync.com",
+            "365mx": ("mail.protection.outlook.com", "protection.outlook.com"),
+            "spf": "include:spf.protection.outlook.com",
+            "sipdir": "sipdir.online.lync.com",
+            "sipfed": "sipfed.online.lync.com"
         }
+
         match record_type:
 
-            case "auto" | "msoid" | "lync" | "spf":
+            case "auto" | "msoid" | "lync" | "spf" | "sipdir" | "sipfed":
                 if answers:
                     for answer in answers:
-                        if re.search(o365_pattern_dict[record_type], str(answer)):
-                            return True
-                return False
+                        if re.search(rf"{o365_pattern_dict[record_type]}", str(answer)):
+                            return o365_pattern_dict[record_type]
 
             case "365mx":
                 if answers:
                     for answer in answers:
-                        if re.search(o365_pattern_dict[record_type][0], str(answer)):
-                            return True
-                        elif re.search(o365_pattern_dict[record_type][1], str(answer)):
-                            print("need update")
-                            return True
-                return False
+                        if re.search(rf"{o365_pattern_dict[record_type][0]}", str(answer)) or \
+                                re.search(rf"{o365_pattern_dict[record_type][1]}", str(answer)):
+                            return o365_pattern_dict[record_type][0] or o365_pattern_dict[record_type][1]
 
-            case "sipdir":
-                return True if answers else False
+        return ""
 
-            case "sipfed":
-                return True if answers else False
+    # ---------------------------------------------- ToolBox Properties -----------------------------------------
+    @property
+    def o365_results(self) -> dict[List[str]]:
+        o365_types = ["auto", "msoid", "lync", "365mx", "spf", "sipdir", "sipfed"]
+        o365_results_dict = {
+            "CNAME": [],
+            "MX": [],
+            "SPF": [],
+            "SRV": []
+        }
+        for o365_type in o365_types:
+            o365_result = self.get_o365_result(o365_type)
+
+            match o365_type:
+                case "auto" | "msoid" | "lync":
+                    o365_results_dict["CNAME"].append(o365_result)
+                case "365mx":
+                    o365_results_dict["MX"].append(o365_result)
+                case "spf":
+                    o365_results_dict["SPF"].append(o365_result)
+                case "sipdir" | "sipfed":
+                    o365_results_dict["SRV"].append(o365_result)
+
+        return o365_results_dict
 
     # Since the tool wants the specific field for the ASN,
     # this is dirty code that I didn't change much
@@ -374,9 +399,9 @@ class DNSToolBox:
         """
 
         srv_result_dict = {
-            "UDP": self.search_srv("udp"),
-            "TCP": self.search_srv("tcp"),
-            "TLS": self.search_srv("tls")
+            "UDP": self.get_srv_results("udp"),
+            "TCP": self.get_srv_results("tcp"),
+            "TLS": self.get_srv_results("tls")
         }
 
         return srv_result_dict
@@ -445,7 +470,7 @@ class DNSToolBox:
 
         return ""
 
-    # -------------------- Comparison ------------------------------
+    # ------------------------------------------- Comparison --------------------------------------------------
     # check 'oldfunshinymelody.neverssl.com' for None SSL
     def has_https(self) -> bool:
         """
@@ -488,7 +513,7 @@ def _main():
     while continue_:
         test_site = input("Enter Domain Name: ")
         toolbox.set_domain_string(test_site)
-        finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4"]  # , "ipv6"]
+        finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4", "ipv6"]
         for dns_record_type in finished_record_type:
             result = toolbox.get_result(dns_record_type)
             print(f"{YELLOW_TITLE}{dns_record_type}:{BLANK_CUT} {result}\n")
@@ -501,10 +526,7 @@ def _main():
         print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
         print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
 
-        o365_types = ["auto", "msoid", "lync", "365mx", "spf", "sipdir", "sipfed"]
-        for o365_type in o365_types:
-            o365_result = toolbox.get_o365_result(o365_type)
-            print(f"{YELLOW_TITLE}{o365_type}:{BLANK_CUT} {o365_result}\n")
+        print(f"{YELLOW_TITLE}o365:{BLANK_CUT} {toolbox.o365_results}\n")
 
         print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
         print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
