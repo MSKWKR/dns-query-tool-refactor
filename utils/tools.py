@@ -3,7 +3,7 @@ import datetime
 import http.client
 import re
 import socket
-from typing import Union, List, Dict
+from typing import List
 from urllib.parse import urlparse
 
 import dns.exception
@@ -16,6 +16,13 @@ from ipwhois.net import Net
 
 import blacklist_checker
 from constants import EMAIL_TABLE, SRV_LIST, YELLOW_TITLE, BLANK_CUT
+
+ToolBoxErrors = (
+    ValueError, TypeError, EOFError, ConnectionResetError, TimeoutError, dns.exception.FormError,
+    dns.exception.SyntaxError, dns.exception.UnexpectedEnd, dns.exception.TooBig, dns.exception.Timeout,
+    dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.resolver.YXDOMAIN,
+    dns.name.EmptyLabel, socket.error
+)
 
 
 class DNSToolBox:
@@ -74,7 +81,7 @@ class DNSToolBox:
         return self._domain_string
 
     # ------------------------- Search Tools ------------------------------------
-    def search(self, record_type: str) -> Union[dns.resolver.Resolver, None]:
+    def search(self, record_type: str) -> dns.resolver.Resolver | None:
         """
         The method search with the record type is a generic function
         that wraps the search of the given record type and the exceptions.
@@ -87,13 +94,11 @@ class DNSToolBox:
         try:
             return self._res.resolve(self._domain_string, record_type)
         # Return None when input domain is incorrect
-        except (dns.exception.FormError, dns.exception.SyntaxError, dns.exception.UnexpectedEnd,
-                dns.exception.TooBig, dns.exception.Timeout, dns.resolver.NXDOMAIN
-                , dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.resolver.YXDOMAIN,
-                dns.name.EmptyLabel, socket.error):
+        except ToolBoxErrors as error:
+            print(f"{error=}")
             return None
 
-    def search_www(self) -> Union[dns.resolver.Resolver, None]:
+    def search_www(self) -> dns.resolver.Resolver | None:
         """
         Search_www check www domain by checking it's A Record.
         :return: The answers by searching the given url with A Record type, None if not found
@@ -105,16 +110,13 @@ class DNSToolBox:
             answers = self._res.resolve("www." + self._domain_string, "A")
             if answers:
                 return answers
-            else:
-                return None
 
-        except (dns.exception.FormError, dns.exception.SyntaxError, dns.exception.UnexpectedEnd,
-                dns.exception.TooBig, dns.exception.Timeout, dns.resolver.NXDOMAIN
-                , dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.resolver.YXDOMAIN,
-                dns.name.EmptyLabel, socket.error):
-            return None
+        except ToolBoxErrors as error:
+            print(f"{error=}")
 
-    def search_whois(self) -> Union[whois.parser.WhoisTw, None]:
+        return None
+
+    def search_whois(self) -> whois.parser.WhoisTw | None:
         """
         Query a WHOIS server directly and return the parsed whois data.
         :return: The result for parsing the WHOIS data, None if not found
@@ -124,11 +126,12 @@ class DNSToolBox:
             whois_result = whois.whois(self._domain_string)
             return whois_result
         # Handle TypeError by returning None
-        except TypeError:
+        except ToolBoxErrors as error:
+            print(f"{error=}")
             return None
 
     @classmethod
-    def search_ipwhois_asn(cls, ip_address: str) -> Dict:
+    def search_ipwhois_asn(cls, ip_address: str) -> dict[any]:
         """
         Util function that searches the ASN records with the given IP
         :param ip_address: An IPv4 or IPv6 string
@@ -149,10 +152,11 @@ class DNSToolBox:
             return asn_results
 
         # Catches ValueError when ip isn't correct
-        except ValueError:
+        except ToolBoxErrors as error:
+            print(f"{error=}")
             return asn_results
 
-    def search_o365(self, record_type: str) -> Union[dns.resolver.Resolver, None]:
+    def search_o365(self, record_type: str) -> dns.resolver.Resolver | None:
         """
         The method search_o365 with record type is a generic function
         that wraps the search of the given record type and the exceptions.
@@ -189,79 +193,33 @@ class DNSToolBox:
                 case _:
                     raise NameError(f"o365 Record Type Input Error: {record_type}")
 
-        except (dns.resolver.NXDOMAIN
-                , dns.resolver.NoAnswer, dns.resolver.NoNameservers) as error:
+        except ToolBoxErrors as error:
             print(f"{error=}")
 
         return answers
 
-    def search_srv_udp(self) -> List[str]:
+    def search_srv(self, proto="tcp") -> List[str]:
         """
-        Util function for searching srv records for udp
-
-        :return: The searched srv records
-        :rtype: List[str]
+            Util function for searching srv records for with the given protocol name. default to tcp.
+            :return: The searched srv records
+            :rtype: List[str]
         """
-
-        srv_udp_list = []
+        proto = proto.lower()
+        srv_result_list = []
         for n in range(len(SRV_LIST)):
             try:
-                udp_record = dns.resolver.resolve(f"_{SRV_LIST[n]}._udp.{self._domain_string}", "SRV")
-                for data in udp_record:
-                    srv_udp_list.append(data.to_text())
+                srv_record = dns.resolver.resolve(f"_{SRV_LIST[n]}._{proto}.{self._domain_string}", "SRV")
+                for data in srv_record:
+                    srv_result_list.append(data.to_text())
 
-            except (dns.resolver.NXDOMAIN, dns.exception.Timeout, dns.resolver.NoAnswer,
-                    dns.resolver.NoNameservers) as error:
+            except ToolBoxErrors as error:
                 # print(f"{error=}")
                 pass
-        return srv_udp_list
-
-    def search_srv_tcp(self) -> str:
-        """
-        Util function for searching srv records for tcp
-
-        :return: The searched srv records
-        :rtype: List[str]
-        """
-        srv_tcp_list = []
-
-        for n in range(len(SRV_LIST)):
-            try:
-                tcp_record = dns.resolver.resolve(f"_{SRV_LIST[n]}._tcp.{self._domain_string}", "SRV")
-
-                for data in tcp_record:
-                    srv_tcp_list.append(data.to_text())
-
-            except (dns.resolver.NXDOMAIN, dns.exception.Timeout, dns.resolver.NoAnswer,
-                    dns.resolver.NoNameservers) as error:
-                # print(f"{error=}")
-                pass
-
-        return srv_tcp_list
-
-    def search_srv_tls(self) -> str:
-        """
-        Util function for searching srv records for tls
-
-        :return: The searched srv records
-        :rtype: List[str]
-        """
-        srv_tls_list = []
-        for n in range(len(SRV_LIST)):
-            try:
-                tls_record = dns.resolver.resolve(f"_{SRV_LIST[n]}._tls.{self._domain_string}", "SRV")
-                for data in tls_record:
-                    srv_tls_list.append(data.to_text())
-
-            except (dns.resolver.NXDOMAIN, dns.exception.Timeout, dns.resolver.NoAnswer,
-                    dns.resolver.NoNameservers) as error:
-                # print(f"{error=}")
-                pass
-        return srv_tls_list
+        return srv_result_list
 
     # ------------------------- Fetch Result Tools ------------------------------------
 
-    def get_result(self, record_type: str) -> Union[str, List]:
+    def get_result(self, record_type: str) -> str | List[str]:
         """
         Function for getting the asked Record Type.
         Can accept input Record type 'A', 'AAAA', 'NS', 'MX', 'TXT', 'SOA', 'WWW' with its upper and lower cases.
@@ -370,7 +328,7 @@ class DNSToolBox:
     # Since the tool wants the specific field for the ASN,
     # this is dirty code that I didn't change much
     @property
-    def asn(self) -> dict:
+    def asn(self) -> dict[str:List[str]]:
         """
         Function for reading the ASN result parsed from search_ipwhois_asn(),
         will leave all the fields empty if the ip list is empty
@@ -408,7 +366,7 @@ class DNSToolBox:
         return asn_dict
 
     @property
-    def srv(self) -> dict:
+    def srv(self) -> dict[str: List[str]]:
         """
         Util for getting the srv record for the searched domain
         :return: The dictionary for the SRV records with field udp, tcp and tls
@@ -416,9 +374,9 @@ class DNSToolBox:
         """
 
         srv_result_dict = {
-            "UDP": self.search_srv_udp(),
-            "TCP": self.search_srv_tcp(),
-            "TLS": self.search_srv_tls()
+            "UDP": self.search_srv("udp"),
+            "TCP": self.search_srv("tcp"),
+            "TLS": self.search_srv("tls")
         }
 
         return srv_result_dict
@@ -433,9 +391,7 @@ class DNSToolBox:
                 zone = dns.zone.from_xfr(dns.query.xfr(master_answer[0].address, self._domain_string))
                 for n in sorted(zone.nodes.keys()):
                     xfr_list.append(zone[n].to_text(n))
-        except (
-                EOFError, dns.query.TransferError, ConnectionResetError,
-                dns.exception.FormError, TimeoutError) as error:
+        except ToolBoxErrors as error:
             print(f"{error=}")
 
         return xfr_list
@@ -450,7 +406,7 @@ class DNSToolBox:
         try:
             address = dns.reversename.from_address(self.get_result("a"))
             return dns.resolver.resolve(str(address), "PTR")[0]
-        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer) as error:
+        except ToolBoxErrors as error:
             print(f"{error=}")
             return ""
 
@@ -543,7 +499,7 @@ def _main():
         print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
         print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
         print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
-        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
+        print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
 
         o365_types = ["auto", "msoid", "lync", "365mx", "spf", "sipdir", "sipfed"]
         for o365_type in o365_types:
