@@ -60,7 +60,7 @@ class DNSToolBox:
     @classmethod
     def parse_raw_domain(cls, input_domain: str) -> str | None:
         """
-        Method parse_raw_domain cleans the input domain and return the domain name
+        Method parse_raw_domain cleanses the input domain and return the domain name
 
         :param input_domain: Raw input domain, might have error key-in symbols
         :type: str
@@ -130,7 +130,7 @@ class DNSToolBox:
 
         return None
 
-    def search_whois(self) -> whois.parser.WhoisTw | None:
+    def search_whois(self) -> any:
         """
         Query a WHOIS server directly and return the parsed whois data.
 
