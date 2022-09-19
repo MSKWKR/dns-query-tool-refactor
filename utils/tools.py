@@ -10,12 +10,13 @@ import dns.exception
 import dns.resolver
 import dns.zone
 import pytz as pytz
+import tld
 import whois
 from ipwhois.asn import IPASN
 from ipwhois.net import Net
 
 import blacklist_checker
-from constants import EMAIL_TABLE, SRV_LIST, YELLOW_TITLE, BLANK_CUT
+from constants import EMAIL_TABLE, SRV_LIST
 
 ToolBoxErrors = (
     ValueError, TypeError, EOFError, ConnectionResetError, TimeoutError, dns.exception.FormError,
@@ -70,12 +71,13 @@ class DNSToolBox:
         """
 
         pattern = '[^A-Za-z0-9.:/]'
-        input_domain = urlparse(re.sub(pattern=pattern, repl="", string=input_domain))
-        # doesn't strip the www
-        input_domain = input_domain.netloc or input_domain.path
-        if input_domain == "":
-            return None
-        input_domain = re.sub(r'(www.)(?!com)', r'', input_domain)
+        input_domain = re.sub(pattern=pattern, repl="", string=input_domain)
+        try:
+            # fixing protocol means the protocol we use now is http and https, ftp will fail
+            input_domain = tld.get_fld(input_domain, fix_protocol=True)
+        except (tld.exceptions.TldBadUrl, tld.exceptions.TldDomainNotFound) as error:
+            print(f"{error=}")
+            input_domain = None
         return input_domain
 
     def set_domain_string(self, domain_string: str) -> str:
@@ -538,31 +540,32 @@ class DNSToolBox:
 
 def _main():
     toolbox = DNSToolBox()
-    continue_ = True
-    while continue_:
-        test_site = input("Enter Domain Name: ")
-
-        toolbox.set_domain_string(test_site)
-        finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4", "ipv6"]
-        for dns_record_type in finished_record_type:
-            result = toolbox.get_result(dns_record_type)
-            print(f"{YELLOW_TITLE}{dns_record_type}:{BLANK_CUT} {result}\n")
-
-        print(f"{YELLOW_TITLE}asn:{BLANK_CUT} {toolbox.asn}\n")
-        print(f"{YELLOW_TITLE}xfr:{BLANK_CUT} {toolbox.xfr}\n")
-        print(f"{YELLOW_TITLE}ptr:{BLANK_CUT} {toolbox.ptr}\n")
-        print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
-        print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
-        print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
-        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
-
-        print(f"{YELLOW_TITLE}o365:{BLANK_CUT} {toolbox.o365_results}\n")
-
-        print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
-        print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
-        print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}")
-        if input("Do you want to continue? (y/n)").lower() == "n":
-            continue_ = False
+    # continue_ = True
+    # while continue_:
+    #     test_site = input("Enter Domain Name: ")
+    #
+    #     toolbox.set_domain_string(test_site)
+    #     finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4", "ipv6"]
+    #     for dns_record_type in finished_record_type:
+    #         result = toolbox.get_result(dns_record_type)
+    #         print(f"{YELLOW_TITLE}{dns_record_type}:{BLANK_CUT} {result}\n")
+    #
+    #     print(f"{YELLOW_TITLE}asn:{BLANK_CUT} {toolbox.asn}\n")
+    #     print(f"{YELLOW_TITLE}xfr:{BLANK_CUT} {toolbox.xfr}\n")
+    #     print(f"{YELLOW_TITLE}ptr:{BLANK_CUT} {toolbox.ptr}\n")
+    #     print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
+    #     print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
+    #     print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
+    #     # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
+    #
+    #     print(f"{YELLOW_TITLE}o365:{BLANK_CUT} {toolbox.o365_results}\n")
+    #
+    #     print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
+    #     print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
+    #     print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}")
+    #     if input("Do you want to continue? (y/n)").lower() == "n":
+    #         continue_ = False
+    toolbox.parse_raw_domain("https://example.com")
 
 
 if __name__ == "__main__":
