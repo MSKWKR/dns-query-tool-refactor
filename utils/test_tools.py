@@ -1,13 +1,18 @@
 import pytest
 
-import tools
+from tools import DNSToolBox
 
-toolbox = tools.DNSToolBox
+# @pytest.fixture
+# def newToolBox():
+#     toolbox = DNSToolBox()
+#     return toolbox
+
+newToolBox = DNSToolBox()
 
 
 @pytest.mark.parametrize("input_, expected", [("test_address.", "test_address"), ("", "")])
 def test_strip_last_dot(input_, expected):
-    have = toolbox.strip_last_dot(input_)
+    have = newToolBox.strip_last_dot(input_)
     assert have == expected
 
 
@@ -26,5 +31,72 @@ raw_domain_check_data = [
 
 @pytest.mark.parametrize("input_, expected", raw_domain_check_data)
 def test_parse_raw_domain(input_, expected):
-    have = toolbox.parse_raw_domain(input_)
+    have = newToolBox.parse_raw_domain(input_)
     assert have == expected
+
+
+correct_string_results = [
+    ("freedom.net.tw", "a", "122.146.12.7"),
+    ("example.com", "aaaa", "2606:2800:220:1:248:1893:25c8:1946"),
+    ("freedom.net.tw", "mx", "0 freedom-net-tw.mail.protection.outlook.com."),
+    ("example.com", "www", "www.example.com")
+]
+
+
+@pytest.mark.parametrize("domain, input_, expected", correct_string_results)
+def test_get_result_correct_string(domain, input_, expected):
+    newToolBox.set_domain_string(domain)
+    have = newToolBox.get_result(input_)
+    assert have == expected
+
+
+correct_list_results = [
+    ("freedom.net.tw", "ns", {'dns1.freedom.net.tw', 'dns2.freedom.net.tw', 'dns3.freedom.net.tw'}),
+    ("freedom.net.tw", "txt", {'"amazonses:fq9kplq+n2QZma81nrX1HqwzW1clBmAjop8dUW0TUAE="',
+                               '"facebook-domain-verification=kif9w8a0h43nkf04g2jpuoh0shfli3"',
+                               '"64290fcgkikb97qpqusspc21la"',
+                               '"TOTFDF29VVG84SWGKEA9DNFZ9GVNLSKX1IFTRSDY"',
+                               '"1password-site-verification=L472XE5IXJFWXE6P6NNVS7ADSY"',
+                               '"v=spf1 mx ip4:122.146.12.9 ip4:122.146.12.10 ip4:122.146.12.30 ip4:208.64.224.60 include:spf.protection.outlook.com include:amazonses.com include:mailgun.org ~all"',
+                               '"google-site-verification=P1h5z2UCOpDPBweJ8G9d5VCpLdQ0E27b8yl11N8NFPY"'}
+     ),
+    ("freedom.net.tw", "ipv4", {'104.236.202.184', '128.199.119.242', '122.146.12.30'}),
+    ("example.com", "ipv6", {'2001:500:8f::53', '2001:500:8d::53'})
+]
+
+
+@pytest.mark.parametrize("domain, input_, expected", correct_list_results)
+def test_get_result_correct_list(domain, input_, expected):
+    newToolBox.set_domain_string(domain)
+    have = set(newToolBox.get_result(input_))
+    assert have == expected
+
+
+@pytest.mark.parametrize("domain", ["example.com"])
+def test_has_https(domain):
+    newToolBox.set_domain_string(domain)
+    have = newToolBox.has_https()
+    expect = True
+    assert have == expect
+
+# def test_get_result_format_a(mocker, mock_result):
+#     different_incorrect_a_record = [(
+#         "12398320548",  # wrong ip
+#         "123.123.123",  # wrong ip
+#         "123sdf.423.853r",  # wrong ip
+#         "127.0.0.1",  # local host
+#         "255.255.255.255"  # special domain
+#         "0.0.0.0",  # special domain
+#         "0.42.42.42",  # can't start with 0
+#         "10.234.345.7",  # private
+#         "192.168.55.12",  # private
+#         "172.16.4.567"  # reserved)
+#     )
+#     ]
+#     class_directory = "tools.DNSToolBox"
+#
+#     m = mocker.patch(f"{class_directory}.get_result")
+#     m.return_value = different_incorrect_a_record
+#     print(m.return_value)
+#     m.assert_called_with("foo")
+#     assert m == mock_result
