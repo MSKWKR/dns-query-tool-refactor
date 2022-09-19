@@ -16,7 +16,7 @@ from ipwhois.asn import IPASN
 from ipwhois.net import Net
 
 import blacklist_checker
-from constants import EMAIL_TABLE, SRV_LIST
+from constants import EMAIL_TABLE, SRV_LIST, YELLOW_TITLE, BLANK_CUT
 
 ToolBoxErrors = (
     ValueError, TypeError, EOFError, ConnectionResetError, TimeoutError, dns.exception.FormError,
@@ -217,6 +217,8 @@ class DNSToolBox:
 
         return answers
 
+    # ------------------------- Get Result Tools ------------------------------------
+
     def get_srv_results(self, proto="tcp") -> List[str]:
         """
             Util function for searching srv records for with the given protocol name, default to tcp.
@@ -237,8 +239,6 @@ class DNSToolBox:
                 pass
         return srv_result_list
 
-    # ------------------------- Get Result Tools ------------------------------------
-
     def get_result(self, record_type: str) -> str | List[str]:
         """
         Function for getting the asked Record Type.
@@ -254,7 +254,19 @@ class DNSToolBox:
 
         record_type = record_type.upper()
         match record_type:
-            case ("A" | "AAAA" | "SOA" | "MX"):
+            case "A":
+                answers = self.search(record_type)
+                result = ""
+                if answers:
+                    for answer in answers:
+                        result = str(answer)
+                        if result in ["0.0.0.0", "255.255.255.255", "127.0.0.1"]:
+                            raise ValueError("Incorrect form Record A, reserved IPv4 address")
+                        return result
+                else:
+                    return result
+
+            case ("AAAA" | "SOA" | "MX"):
                 answers = self.search(record_type)
                 if answers:
                     # answers is an iterator of type records, need to loop through in order to get the data
@@ -540,32 +552,31 @@ class DNSToolBox:
 
 def _main():
     toolbox = DNSToolBox()
-    # continue_ = True
-    # while continue_:
-    #     test_site = input("Enter Domain Name: ")
-    #
-    #     toolbox.set_domain_string(test_site)
-    #     finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4", "ipv6"]
-    #     for dns_record_type in finished_record_type:
-    #         result = toolbox.get_result(dns_record_type)
-    #         print(f"{YELLOW_TITLE}{dns_record_type}:{BLANK_CUT} {result}\n")
-    #
-    #     print(f"{YELLOW_TITLE}asn:{BLANK_CUT} {toolbox.asn}\n")
-    #     print(f"{YELLOW_TITLE}xfr:{BLANK_CUT} {toolbox.xfr}\n")
-    #     print(f"{YELLOW_TITLE}ptr:{BLANK_CUT} {toolbox.ptr}\n")
-    #     print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
-    #     print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
-    #     print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
-    #     # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
-    #
-    #     print(f"{YELLOW_TITLE}o365:{BLANK_CUT} {toolbox.o365_results}\n")
-    #
-    #     print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
-    #     print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
-    #     print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}")
-    #     if input("Do you want to continue? (y/n)").lower() == "n":
-    #         continue_ = False
-    toolbox.parse_raw_domain("https://example.com")
+    continue_ = True
+    while continue_:
+        test_site = input("Enter Domain Name: ")
+
+        toolbox.set_domain_string(test_site)
+        finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4", "ipv6"]
+        for dns_record_type in finished_record_type:
+            result = toolbox.get_result(dns_record_type)
+            print(f"{YELLOW_TITLE}{dns_record_type}:{BLANK_CUT} {result}\n")
+
+        print(f"{YELLOW_TITLE}asn:{BLANK_CUT} {toolbox.asn}\n")
+        print(f"{YELLOW_TITLE}xfr:{BLANK_CUT} {toolbox.xfr}\n")
+        print(f"{YELLOW_TITLE}ptr:{BLANK_CUT} {toolbox.ptr}\n")
+        print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
+        print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
+        print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
+        print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
+
+        print(f"{YELLOW_TITLE}o365:{BLANK_CUT} {toolbox.o365_results}\n")
+
+        print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
+        print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
+        print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}")
+        if input("Do you want to continue? (y/n)").lower() == "n":
+            continue_ = False
 
 
 if __name__ == "__main__":
