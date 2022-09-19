@@ -15,12 +15,12 @@ raw_domain_check_data = [
     ("", None),
     ("ksjdhfskj", None),
     ("example.com", "example.com"),
-    ("https://example.com", "example.com"),
+    ("http://example.com", "example.com"),
     ("https://www.example.com", "example.com"),
     ("'https://www.e{xam}ple.com'", "example.com"),
     ("https://edward.example.com", "example.com"),
     ("https://example.com.hk", "example.com.hk"),
-    ("ftp://example.com", "example.com"),
+    ("ftp://example.com", None),
 ]
 
 
