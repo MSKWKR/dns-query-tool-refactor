@@ -1,3 +1,4 @@
+# raw domain for check
 raw_domain_check_data = [
     ("", None),
     ("ksjdhfskj", None),
@@ -10,6 +11,7 @@ raw_domain_check_data = [
     ("ftp://example.com", None),
 ]
 
+# correct results
 correct_string_results = [
     ("freedom.net.tw", "a", "122.146.12.7"),
     ("example.com", "aaaa", "2606:2800:220:1:248:1893:25c8:1946"),
@@ -31,6 +33,7 @@ correct_list_results = [
     ("example.com", "ipv6", {'2001:500:8f::53', '2001:500:8d::53'})
 ]
 
+# a
 different_incorrect_a_record = (
     "12398320548",  # wrong ip
     "123.123.123",  # wrong ip
