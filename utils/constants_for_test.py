@@ -41,8 +41,24 @@ different_incorrect_a_record = (
     "127.0.0.1",  # local host
     "255.255.255.255"  # special domain
     "0.0.0.0",  # special domain
-    "0.42.42.42",  # can't start with 0
-    "10.234.345.7",  # private
-    "192.168.55.12",  # private
-    "172.16.4.567"  # reserved
+    "0.42.42.42",  # can't start with 0, used for current software network
+    "10.234.345.7",  # Used for local communications within a private network.
+    "192.168.55.12",  # Used for local communications within a private network
+    "172.16.4.567",  # Used for local communications within a private network.
+    "233.252.0.0",  # Assigned as MCAST-TEST-NET, documentation and examples.
+    "224.0.0.1"  # In use for IP multicast.[10] (Former Class D network.)
+)
+
+# aaaa
+different_incorrect_aaaa_record = (
+    "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  # Default Route
+    "::",  # unspecified address
+    "100::ffff:ffff:ffff:ffff",  # Discard Prefix
+    "2001::ffff:ffff:ffff:ffff:ffff:ffff",  # Teredo tunneling
+    "2001:2f:ffff:ffff:ffff:ffff:ffff:ffff",  # ORCHIDv2
+    "2001:db8:ffff:ffff:ffff:ffff:ffff:ffff",  # Addresses used in documentation and example source code
+    "2002:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  # The 6to4 addressing scheme
+    "fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  # Unique Local Address
+    "fe80::ffff:ffff:ffff:ffff",  # Link-local Address
+    "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"  # Multicast Address
 )
