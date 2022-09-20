@@ -256,28 +256,21 @@ class DNSToolBox:
 
         record_type = record_type.upper()
         match record_type:
-            case "A":
+            case ("A" | "AAAA" | "SOA" | "MX"):
                 answers = self.search(record_type)
                 result = ""
-                if answers:
-                    for answer in answers:
-                        # result = str(answer)
-                        result = "0.0.0.0"
-                        if not self._validator.is_valid(record_type, result):
-                            raise TypeError("Incorrect form Record A, reserved IPv4 address")
-                        return result
-                else:
-                    return result
-
-            case ("AAAA" | "SOA" | "MX"):
-                answers = self.search(record_type)
                 if answers:
                     # answers is an iterator of type records, need to loop through in order to get the data
                     for answer in answers:
                         # answer is a dns.resolver.Answer instance, return type should be a converted string
-                        return str(answer)
+                        result = str(answer)
+                        if not self._validator.is_valid(record_type, result):
+                            # return an empty result if the given answer is incorrect
+                            print(f"Incorrect result: {result}")
+                            return result
+                        return result
                 else:
-                    return ""
+                    return result
 
             case "TXT":
                 answers = self.search(record_type)
@@ -555,8 +548,6 @@ class DNSToolBox:
 
 def _main():
     toolbox = DNSToolBox()
-    toolbox.set_domain_string("example.com")
-
     # continue_ = True
     # while continue_:
     #     test_site = input("Enter Domain Name: ")
@@ -582,7 +573,6 @@ def _main():
     #     print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}")
     #     if input("Do you want to continue? (y/n)").lower() == "n":
     #         continue_ = False
-    toolbox.get_result("a")
 
 
 if __name__ == "__main__":
