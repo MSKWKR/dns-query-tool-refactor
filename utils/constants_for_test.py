@@ -36,7 +36,7 @@ correct_list_results = [
 
 # -------------------------------- Constants for test_valid_result -------------------------------------
 # a
-different_incorrect_a_record = (
+different_incorrect_a_records = (
     "12398320548",  # wrong ip
     "123.123.123",  # wrong ip
     "123sdf.423.853r",  # wrong ip
@@ -54,7 +54,8 @@ different_incorrect_a_record = (
 )
 
 # aaaa
-different_incorrect_aaaa_record = (
+different_incorrect_aaaa_records = (
+    "vvvv:vvvv:vvv:xxx:zzz"
     "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  # Default Route
     "::",  # unspecified address
     "100::ffff:ffff:ffff:ffff",  # Discard Prefix
@@ -69,7 +70,7 @@ different_incorrect_aaaa_record = (
 
 # -------------------------------- Constants for test_blacklist_checker -------------------------------------
 
-blacklisted_site = (
+blacklisted_sites = (
     "subtitleseeker.com",
     "financereports.co",
     "iranact.co",
