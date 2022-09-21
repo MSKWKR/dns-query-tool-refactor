@@ -87,7 +87,10 @@ class Validator:
                     return False
 
                 search_result = ipaddress.IPv6Address(search_result)
-                return search_result.is_unspecified
+                if search_result.is_loopback or search_result.is_multicast or search_result.is_private \
+                        or search_result.is_reserved or search_result.is_link_local or search_result.is_site_local or search_result.is_global:
+                    return False
+                return True
 
             case "MX":
                 pass
@@ -98,7 +101,7 @@ class Validator:
 
 def _main():
     v = Validator()
-    print(v.is_valid("A", "a.0.0.0"))
+    print(v.is_valid("AAAA", "2606:2800:220:1:248:1893:25c8:1946"))
 
 
 if __name__ == "__main__":
