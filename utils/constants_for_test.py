@@ -38,15 +38,17 @@ different_incorrect_a_record = (
     "12398320548",  # wrong ip
     "123.123.123",  # wrong ip
     "123sdf.423.853r",  # wrong ip
+    "256.256.0.1",  # wrong ip
     "127.0.0.1",  # local host
-    "255.255.255.255"  # special domain
+    "255.255.255.255",  # special domain
     "0.0.0.0",  # special domain
     "0.42.42.42",  # can't start with 0, used for current software network
     "10.234.345.7",  # Used for local communications within a private network.
     "192.168.55.12",  # Used for local communications within a private network
     "172.16.4.567",  # Used for local communications within a private network.
     "233.252.0.0",  # Assigned as MCAST-TEST-NET, documentation and examples.
-    "224.0.0.1"  # In use for IP multicast.[10] (Former Class D network.)
+    "224.0.0.1",  # In use for IP multicast.[10] (Former Class D network.)
+    "240.3.157.6",  # reserved for future use
 )
 
 # aaaa
