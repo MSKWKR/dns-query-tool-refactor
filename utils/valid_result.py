@@ -1,3 +1,5 @@
+import ipaddress
+import re
 from typing import List
 
 from constants import SPECIAL_ADDRESS_BLOCKS
@@ -23,20 +25,18 @@ class Validator:
         """
         match record_type:
             case "A":
-                for char in search_result:
-                    # shouldn't contain characters other than numeric numbers
-                    if char.isalpha():
-                        return False
+                # shouldn't contain any character that isn't 0-9
+                regex_pattern = r'^[0-9.]'
+                if not re.search(pattern=regex_pattern, string=search_result):
+                    return False
 
                 split_char_list: List[str] = search_result.split(".")
-                print(split_char_list)
                 if len(split_char_list) != 4:
                     # shouldn't have less than 3 dots
                     return False
 
                 for num in split_char_list:
                     # shouldn't have any numbers that is greater than 256
-
                     if int(num) >= 256:
                         return False
                     # shouldn't have any numbers that is greater than 256
@@ -58,7 +58,6 @@ class Validator:
                 elif (split_char_list[0], split_char_list[1]) in [("169", "254"), ("192", "168")]:
                     # 168.254.0.0 - 169.254.255.255 is used for link-local addresses
                     # 192.168.0.0 - 192.168.255.255 is used for private local communications
-
                     return False
 
                 elif (split_char_list[0], split_char_list[1], split_char_list[2]) in [
@@ -70,7 +69,6 @@ class Validator:
                     # 192.0.2.0 - 192.0.2.255 is assigned for TEST-NET-1
                     # 198.51.100.0 - 198.51.100.255 is assigned for TEST-NET-2
                     # 203.0.113.0 - 203.0.113.255 is assigned for TEST-NET-3
-
                     return False
 
                 for address_block in SPECIAL_ADDRESS_BLOCKS:
@@ -80,7 +78,16 @@ class Validator:
                 return True
 
             case "AAAA":
-                pass
+                # shouldn't contain any character that isn't 0-9, A-F(a-f)
+                regex_pattern = r'^[0-9a-fA-F:.]'
+                if not re.search(pattern=regex_pattern, string=search_result):
+                    return False
+                elif search_result == "::":
+
+                    return False
+
+                search_result = ipaddress.IPv6Address(search_result)
+                return search_result.is_unspecified
 
             case "MX":
                 pass
@@ -91,7 +98,7 @@ class Validator:
 
 def _main():
     v = Validator()
-    print(v.is_valid("A", "0.0.0.0"))
+    print(v.is_valid("A", "a.0.0.0"))
 
 
 if __name__ == "__main__":
