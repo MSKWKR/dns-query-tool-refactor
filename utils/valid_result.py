@@ -43,51 +43,34 @@ class Validator:
                     elif int(num) < 0:
                         return False
 
-                if split_char_list[0] in ("0", "10", "127"):
+                future_reserved_range = [str(num) for num in range(240, 256)]  # 240 - 255
+                multicast_reserved_range = [str(num) for num in range(224, 240)]  # 224 - 239
+
+                if split_char_list[0] in ("0", "10", "127", *future_reserved_range, *multicast_reserved_range):
                     # 0, current software network
                     # 10, local communications within private network
                     # 127, loopback addresses
-                    return False
-
-                elif split_char_list[0] in (str(num) for num in range(240, 256)):
                     # 240.0.0.0- 255.255.255.254 is reserved for future use
                     # 255.255.255.255 is reserved for limited broadcast
-                    return False
-
-                elif split_char_list[0] in (str(num) for num in range(224, 240)):
                     # 224.0.0.0 - 239.255.255.255 is used for IP multicast
                     return False
 
-                elif split_char_list[0] == "169" and split_char_list[1] == "254":
+                elif (split_char_list[0], split_char_list[1]) in [("169", "254"), ("192", "168")]:
                     # 168.254.0.0 - 169.254.255.255 is used for link-local addresses
+                    # 192.168.0.0 - 192.168.255.255 is used for private local communications
+
                     return False
 
-                elif split_char_list[0] == "192" and split_char_list[1] == "168":
-                    # 168.254.0.0 - 169.254.255.255 is used for link-local addresses
-                    return False
-
-                elif split_char_list[0] == "198" and split_char_list[1] == "51" and split_char_list[2] == "100":
-                    # 198.51.100.0 - 198.51.100.255 is assigned for TEST-NET-2
-                    return False
-
-                elif split_char_list[0] == "192" and split_char_list[1] == "88" and split_char_list[2] == "99":
+                elif (split_char_list[0], split_char_list[1], split_char_list[2]) in [
+                    ("198", "51", "100"), ("192", "88", "99"), ("192", "0", "0"),
+                    ("192", "0", "2"), ("203", "0", "113"), ("233", "252", "0")
+                ]:
                     # 192.88.99.0 - 192.88.99.255 is reserved for IPv6 to IPv4 relay
-                    return False
-
-                elif split_char_list[0] == "192" and split_char_list[1] == "0" and split_char_list[2] == "0":
                     # 192.0.0.0 - 192.0.0.255 is reserved for IETF protocol assignments
-                    return False
-
-                elif split_char_list[0] == "192" and split_char_list[1] == "0" and split_char_list[2] == "2":
                     # 192.0.2.0 - 192.0.2.255 is assigned for TEST-NET-1
-                    return False
-
-                elif split_char_list[0] == "203" and split_char_list[1] == "0" and split_char_list[2] == "113":
+                    # 198.51.100.0 - 198.51.100.255 is assigned for TEST-NET-2
                     # 203.0.113.0 - 203.0.113.255 is assigned for TEST-NET-3
-                    return False
 
-                elif split_char_list[0] == "233" and split_char_list[1] == "252" and split_char_list[2] == "0":
-                    # 203.0.113.0 - 203.0.113.255 is assigned as MCAST-TEST-NET
                     return False
 
                 for address_block in SPECIAL_ADDRESS_BLOCKS:
