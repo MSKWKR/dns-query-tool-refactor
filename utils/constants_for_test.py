@@ -1,3 +1,4 @@
+# ------------------------------- Constants for test_tools --------------------------------------------------
 # raw domain for check
 raw_domain_check_data = [
     ("", None),
@@ -33,6 +34,7 @@ correct_list_results = [
     ("example.com", "ipv6", {'2001:500:8f::53', '2001:500:8d::53'})
 ]
 
+# -------------------------------- Constants for test_valid_result -------------------------------------
 # a
 different_incorrect_a_record = (
     "12398320548",  # wrong ip
@@ -63,4 +65,14 @@ different_incorrect_aaaa_record = (
     "fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  # Unique Local Address
     "fe80::ffff:ffff:ffff:ffff",  # Link-local Address
     "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"  # Multicast Address
+)
+
+# -------------------------------- Constants for test_blacklist_checker -------------------------------------
+
+blacklisted_site = (
+    "subtitleseeker.com",
+    "financereports.co",
+    "iranact.co",
+    "totalpad.com",
+    "salescript.info"
 )
