@@ -1,3 +1,6 @@
+from utils import get_ipv4_range
+
+# ------------------------------------------------------- DNSToolBox Constants---------------------------------------------------------------------
 EMAIL_TABLE = {
     # domain
     "aspmx.l.google.com": "Google_Workspace",
@@ -96,3 +99,11 @@ SRV_LIST = [
 
 YELLOW_TITLE = "\033[1;33;40m"
 BLANK_CUT = "\033[0m"
+
+# ------------------------------------------------------- Validator Constants ---------------------------------------------------------------------
+
+SPECIAL_ADDRESS_BLOCKS = {
+    "nat_shared_space_addresses": get_ipv4_range("100.64.0.0", "100.127.255.255"),
+    "local_communication_addresses": get_ipv4_range("172.16.0.0", "172.31.255.255"),
+    "inter_network_benchmark_testing_addresses": get_ipv4_range("198.18.0.0", "198.19.255.255")
+}
