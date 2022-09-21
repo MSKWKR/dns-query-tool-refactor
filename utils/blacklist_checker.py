@@ -1,6 +1,7 @@
 import base64
 import configparser
 import json
+from pprint import pprint
 from typing import Union
 
 import pydnsbl
@@ -108,10 +109,12 @@ class BlackListChecker:
         :param url: A url or a domain string to check
         :type: str
 
-        :return: The result after checking with Virus Total
+        :return: The result after checking with Virus Total, True if blacklisted
         :rtype: bool
         """
-        return len(self.site_status_virus_total(url)[1]) != 0
+        black_listed_provider = self.site_status_virus_total(url)[1]
+        print(black_listed_provider)
+        return len(black_listed_provider) != 0
 
     def is_black_listed(self, url: str) -> bool:
         """
@@ -122,13 +125,13 @@ class BlackListChecker:
         :return: True if blacklisted by any security provider
         :rtype: bool
         """
-        return self.is_black_listed_virus_total(url) and self.is_black_listed_pydnsbl(url)
+        return self.is_black_listed_virus_total(url) or self.is_black_listed_pydnsbl(url)
 
 
 def _main():
     checker = BlackListChecker()
-    print(checker.is_black_listed_virus_total("example.com"))
-    print(checker.is_black_listed("example.com"))
+    pprint(checker.site_status_virus_total("subtitleseeker.com"))
+    print(checker.is_black_listed("subtitleseeker.com"))
 
 
 if __name__ == "__main__":
