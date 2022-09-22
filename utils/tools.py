@@ -1,8 +1,10 @@
 """DNS Tool Box"""
+import concurrent.futures
 import datetime
 import http.client
 import re
 import socket
+import time
 from typing import List
 from urllib.parse import urlparse
 
@@ -424,10 +426,15 @@ class DNSToolBox:
         :rtype: dict
         """
 
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            srv_udp_result = executor.submit(self.get_srv_results, "udp").result()
+            srv_tcp_result = executor.submit(self.get_srv_results, "tcp").result()
+            srv_tls_result = executor.submit(self.get_srv_results, "tls").result()
+
         srv_result_dict = {
-            "UDP": self.get_srv_results("udp"),
-            "TCP": self.get_srv_results("tcp"),
-            "TLS": self.get_srv_results("tls")
+            "UDP": srv_udp_result,
+            "TCP": srv_tcp_result,
+            "TLS": srv_tls_result
         }
 
         return srv_result_dict
@@ -551,7 +558,7 @@ def _main():
     continue_ = True
     while continue_:
         test_site = input("Enter Domain Name: ")
-
+        start = time.perf_counter()
         toolbox.set_domain_string(test_site)
         finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4", "ipv6"]
         for dns_record_type in finished_record_type:
@@ -564,13 +571,15 @@ def _main():
         print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
         print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
         print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
-        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
-
+        print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
         print(f"{YELLOW_TITLE}o365:{BLANK_CUT} {toolbox.o365_results}\n")
-
         print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
         print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
-        print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}")
+        print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}\n")
+
+        finish = time.perf_counter()
+        print(f"Finished in {round(finish - start, 2)} second(s)")
+
         if input("Do you want to continue? (y/n)").lower() == "n":
             continue_ = False
 
