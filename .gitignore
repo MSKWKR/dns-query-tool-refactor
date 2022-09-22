@@ -3,3 +3,4 @@
 venv
 __pycache__/
 apikeys.ini
+.$DNS_tool_flow.drawio.bkp

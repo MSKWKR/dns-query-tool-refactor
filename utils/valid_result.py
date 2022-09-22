@@ -88,7 +88,7 @@ class Validator:
 
                 search_result = ipaddress.IPv6Address(search_result)
                 if search_result.is_loopback or search_result.is_multicast or search_result.is_private \
-                        or search_result.is_reserved or search_result.is_link_local or search_result.is_site_local or search_result.is_global:
+                        or search_result.is_reserved or search_result.is_link_local or search_result.is_site_local:
                     return False
                 return True
 
