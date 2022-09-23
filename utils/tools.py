@@ -5,7 +5,7 @@ import http.client
 import re
 import socket
 import time
-from typing import List
+from typing import List, Optional
 from urllib.parse import urlparse
 
 import dns.exception
@@ -99,7 +99,7 @@ class DNSToolBox:
         return self._domain_string
 
     # ------------------------- Search Tools ------------------------------------
-    def search(self, record_type: str) -> dns.resolver.Resolver | None:
+    def search(self, record_type: str) -> Optional[dns.resolver.Resolver]:
         """
         The method search with the record type is a generic function
         that wraps the search of the given record type and the exceptions.
@@ -117,7 +117,7 @@ class DNSToolBox:
             print(f"{error=}")
             return None
 
-    def search_www(self) -> dns.resolver.Resolver | None:
+    def search_www(self) -> Optional[dns.resolver.Resolver]:
         """
         Search_www check www domain by checking it's A Record.
 
@@ -178,7 +178,7 @@ class DNSToolBox:
             print(f"{error=}")
             return asn_results
 
-    def search_o365(self, record_type: str) -> dns.resolver.Resolver | None:
+    def search_o365(self, record_type: str) -> Optional[dns.resolver.Resolver]:
         """
         The method search_o365 with record type is a generic function
         that wraps the search of the given record type and the exceptions.

@@ -93,10 +93,10 @@ class Validator:
                 return True
 
             case "MX":
-                pass
+                return True
 
             case "SOA":
-                pass
+                return True
 
 
 def _main():
