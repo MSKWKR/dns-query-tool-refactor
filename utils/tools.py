@@ -5,7 +5,7 @@ import http.client
 import re
 import socket
 import time
-from typing import List, Optional
+from typing import Optional, List, Dict
 from urllib.parse import urlparse
 
 import dns.exception
@@ -37,7 +37,7 @@ class DNSToolBox:
     # the tool is defaulted with nothing
     def __init__(self):
         """Initializes class attribute"""
-        self.check_time = datetime.datetime.now(pytz.timezone("Asia/Taipei"))
+        self.check_time = str(datetime.datetime.now(pytz.timezone("Asia/Taipei")))
 
         self._domain_string = None
         self._res = dns.resolver.Resolver()
@@ -63,7 +63,7 @@ class DNSToolBox:
         return addr[:-1] if addr.endswith('.') else addr
 
     @classmethod
-    def parse_raw_domain(cls, input_domain: str) -> str | None:
+    def parse_raw_domain(cls, input_domain: str) -> Optional[str]:
         """
         Method parse_raw_domain cleanses the input domain and return the domain name
 
@@ -152,7 +152,7 @@ class DNSToolBox:
             return None
 
     @classmethod
-    def search_ipwhois_asn(cls, ip_address: str) -> dict[any]:
+    def search_ipwhois_asn(cls, ip_address: str) -> Dict[any:any]:
         """
         Util function that searches the ASN records with the given IP
 
@@ -354,7 +354,7 @@ class DNSToolBox:
 
     # ---------------------------------------------- ToolBox Properties -----------------------------------------
     @property
-    def o365_results(self) -> dict[str: List[str]]:
+    def o365_results(self) -> Dict[str: List[str]]:
         o365_types = ["auto", "msoid", "lync", "365mx", "spf", "sipdir", "sipfed"]
         o365_results_dict = {
             "CNAME": [],
@@ -380,7 +380,7 @@ class DNSToolBox:
     # Since the tool wants the specific field for the ASN,
     # this is dirty code that I didn't change much
     @property
-    def asn(self) -> dict[str:List[str]]:
+    def asn(self) -> Dict[str:List[str]]:
         """
         Function for reading the ASN result parsed from search_ipwhois_asn(),
         will leave all the fields empty if the ip list is empty
@@ -418,7 +418,7 @@ class DNSToolBox:
         return asn_dict
 
     @property
-    def srv(self) -> dict[str: List[str]]:
+    def srv(self) -> Dict[str: List[str]]:
         """
         Util for getting the srv record for the searched domain
 
