@@ -1,4 +1,4 @@
-from utils import get_ipv4_range
+from utils.utils import get_ipv4_range
 
 # ------------------------------------------------------- DNSToolBox Constants---------------------------------------------------------------------
 EMAIL_TABLE = {
