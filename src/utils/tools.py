@@ -17,9 +17,10 @@ import tld
 import whois
 from ipwhois.asn import IPASN
 from ipwhois.net import Net
-from utils.blacklist_checker import BlackListChecker
-from utils.constants import EMAIL_TABLE, SRV_LIST
-from utils.valid_result import Validator
+
+from .blacklist_checker import BlackListChecker
+from .constants import EMAIL_TABLE, SRV_LIST
+from .valid_result import Validator
 
 ToolBoxErrors = (
     ValueError, TypeError, EOFError, ConnectionResetError, TimeoutError, dns.exception.FormError,

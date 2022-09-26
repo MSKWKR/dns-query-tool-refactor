@@ -1,7 +1,7 @@
 import pytest
 
-from utils.blacklist_checker import BlackListChecker
-from utils.constants_for_test import blacklisted_sites
+from util_tools.blacklist_checker import BlackListChecker
+from util_tools.constants_for_test import blacklisted_sites
 
 test_black_list_checker = BlackListChecker()
 
