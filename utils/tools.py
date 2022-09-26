@@ -5,6 +5,7 @@ import http.client
 import re
 import socket
 import time
+from pprint import pprint
 from typing import Optional, List
 from urllib.parse import urlparse
 
@@ -17,9 +18,9 @@ import whois
 from ipwhois.asn import IPASN
 from ipwhois.net import Net
 
-import utils.blacklist_checker
-from utils.constants import EMAIL_TABLE, SRV_LIST, YELLOW_TITLE, BLANK_CUT
-from utils.valid_result import Validator
+from blacklist_checker import BlackListChecker
+from constants import EMAIL_TABLE, SRV_LIST
+from valid_result import Validator
 
 ToolBoxErrors = (
     ValueError, TypeError, EOFError, ConnectionResetError, TimeoutError, dns.exception.FormError,
@@ -41,7 +42,7 @@ class DNSToolBox:
 
         self._domain_string = None
         self._res = dns.resolver.Resolver()
-        self._black_list_checker = utils.blacklist_checker.BlackListChecker()
+        self._black_list_checker = BlackListChecker()
         self._validator = Validator()
 
     def __repr__(self):
@@ -353,7 +354,7 @@ class DNSToolBox:
         return ""
 
     # ---------------------------------------------- ToolBox Properties -----------------------------------------
-    @property
+    # @property
     def o365_results(self) -> dict[str: List[str]]:
         o365_types = ["auto", "msoid", "lync", "365mx", "spf", "sipdir", "sipfed"]
         o365_results_dict = {
@@ -379,7 +380,7 @@ class DNSToolBox:
 
     # Since the tool wants the specific field for the ASN,
     # this is dirty code that I didn't change much
-    @property
+    # @property
     def asn(self) -> dict[str:List[str]]:
         """
         Function for reading the ASN result parsed from search_ipwhois_asn(),
@@ -417,7 +418,7 @@ class DNSToolBox:
 
         return asn_dict
 
-    @property
+    # @property
     def srv(self) -> dict[str: List[str]]:
         """
         Util for getting the srv record for the searched domain
@@ -439,7 +440,7 @@ class DNSToolBox:
 
         return srv_result_dict
 
-    @property
+    # @property
     def xfr(self) -> List[str]:
         xfr_list = []
         try:
@@ -454,7 +455,7 @@ class DNSToolBox:
 
         return xfr_list
 
-    @property
+    # @property
     def ptr(self) -> str:
         """
         Util function for getting the ptr record using reverse query
@@ -463,7 +464,7 @@ class DNSToolBox:
         """
         try:
             address = dns.reversename.from_address(self.get_result("a"))
-            return dns.resolver.resolve(str(address), "PTR")[0]
+            return str(dns.resolver.resolve(str(address), "PTR")[0])
         except ToolBoxErrors as error:
             print(f"{error=}")
             return ""
@@ -471,7 +472,7 @@ class DNSToolBox:
     # --------------------- whois details ----------------------
     # ["expiration_date", "registrar"]
     # not testing the following code since it's merely getting fields from the whois result
-    @property
+    # @property
     def expiration_date(self) -> str:
         """
         Util for getting the expiration date for the searched domain
@@ -484,7 +485,7 @@ class DNSToolBox:
             return whois_result["expiration_date"]
         return ""
 
-    @property
+    # @property
     def registrar(self) -> str:
         """
         Util for getting the registrar for the searched domain
@@ -498,7 +499,7 @@ class DNSToolBox:
         return ""
 
     # ---------------------- Email Provider ------------------------
-    @property
+    # @property
     def email_provider(self) -> str:
         mx_record = self.get_result("mx")
         if len(mx_record) != 0:
@@ -548,9 +549,61 @@ class DNSToolBox:
         """
         return self._black_list_checker.is_black_listed(self._domain_string)
 
-    def ns_nested_in_ip(self) -> bool:
-        ns_list = self.get_result("ns")
-        ipv4_list = self.get_result("ipv4")
+    #  ------------------- Output to dict ----------------------------------------
+    @property
+    def domain_info(self) -> dict:
+        start_time = time.perf_counter()
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            check_time = self.check_time
+            a_record = executor.submit(self.get_result, "a").result()
+            aaaa_record = executor.submit(self.get_result, "aaaa").result()
+            mx_record = executor.submit(self.get_result, "mx").result()
+            soa_record = executor.submit(self.get_result, "soa").result()
+            www_address = executor.submit(self.get_result, "www").result()
+            name_server = executor.submit(self.get_result, "ns").result()
+            txt_record = executor.submit(self.get_result, "txt").result()
+            ipv4_list = executor.submit(self.get_result, "ipv4").result()
+            ipv6_list = executor.submit(self.get_result, "ipv6").result()
+            # properties can't multi-thread
+            asn_record = executor.submit(self.asn).result()
+            xfr_record = executor.submit(self.xfr).result()
+            ptr_record = executor.submit(self.ptr).result()
+            registrar = executor.submit(self.registrar).result()
+            expiration_date = executor.submit(self.expiration_date).result()
+            email_exchange_service = executor.submit(self.email_provider).result()
+            srv_record = executor.submit(self.srv).result()
+            o365_record = executor.submit(self.o365_results).result()
+            has_https = executor.submit(self.has_https).result()
+            is_blacklisted = executor.submit(self.is_black_listed).result()
+
+        domain_search_result = {
+            "check_time": check_time,
+            "a": a_record,
+            "aaaa": aaaa_record,
+            "mx": mx_record,
+            "soa": soa_record,
+            "www": www_address,
+            "ns": name_server,
+            "txt": txt_record,
+            "ipv4": ipv4_list,
+            "ipv6": ipv6_list,
+            "asn": asn_record,
+            "xfr": xfr_record,
+            "ptr": ptr_record,
+            "registrar": registrar,
+            "expiration_date": expiration_date,
+            "email_exchange_service": email_exchange_service,
+            "srv": srv_record,
+            "o365": o365_record,
+            "has_https": has_https,
+            "is_blacklisted": is_blacklisted
+        }
+        end_time = time.perf_counter()
+        search_used_time: str = f"{round(end_time - start_time, 2)} second(s)"
+        domain_search_result["search_used_time"] = search_used_time
+
+        return domain_search_result
 
 
 def _main():
@@ -558,27 +611,31 @@ def _main():
     continue_ = True
     while continue_:
         test_site = input("Enter Domain Name: ")
-        start = time.perf_counter()
+        # start = time.perf_counter()
         toolbox.set_domain_string(test_site)
-        finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4", "ipv6"]
-        for dns_record_type in finished_record_type:
-            result = toolbox.get_result(dns_record_type)
-            print(f"{YELLOW_TITLE}{dns_record_type}:{BLANK_CUT} {result}\n")
+        # finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4", "ipv6"]
+        # for dns_record_type in finished_record_type:
+        #     result = toolbox.get_result(dns_record_type)
+        #     print(f"{YELLOW_TITLE}{dns_record_type}:{BLANK_CUT} {result}\n")
+        #
+        # print(f"{YELLOW_TITLE}asn:{BLANK_CUT} {toolbox.asn}\n")
+        # print(f"{YELLOW_TITLE}xfr:{BLANK_CUT} {toolbox.xfr}\n")
+        # print(f"{YELLOW_TITLE}ptr:{BLANK_CUT} {toolbox.ptr}\n")
+        # print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
+        # print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
+        # print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
+        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
+        # print(f"{YELLOW_TITLE}o365:{BLANK_CUT} {toolbox.o365_results}\n")
+        # print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
+        # print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
+        # print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}\n")
+        #
+        # finish = time.perf_counter()
+        # print(f"Finished in {round(finish - start, 2)} second(s)")
 
-        print(f"{YELLOW_TITLE}asn:{BLANK_CUT} {toolbox.asn}\n")
-        print(f"{YELLOW_TITLE}xfr:{BLANK_CUT} {toolbox.xfr}\n")
-        print(f"{YELLOW_TITLE}ptr:{BLANK_CUT} {toolbox.ptr}\n")
-        print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
-        print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
-        print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
-        print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
-        print(f"{YELLOW_TITLE}o365:{BLANK_CUT} {toolbox.o365_results}\n")
-        print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
-        print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
-        print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}\n")
-
-        finish = time.perf_counter()
-        print(f"Finished in {round(finish - start, 2)} second(s)")
+        search_result = toolbox.domain_info
+        pprint(search_result)
+        print(search_result["search_used_time"])
 
         if input("Do you want to continue? (y/n)").lower() == "n":
             continue_ = False

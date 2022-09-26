@@ -2,7 +2,7 @@ import ipaddress
 import re
 from typing import List
 
-from utils.constants import SPECIAL_ADDRESS_BLOCKS
+from constants import SPECIAL_ADDRESS_BLOCKS
 
 
 class Validator:
