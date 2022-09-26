@@ -3,17 +3,17 @@ from typing import Optional, List
 from sqlmodel import Field, SQLModel
 
 
-class Domain(SQLModel):
+class Domain(SQLModel, table=True):
     """
-    Model class for a specific domain
+    Model class for a specific domain, related to the search records
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     domain_string: str = Field(index=True)
 
 
-class DNSRecord(SQLModel):
+class DNSRecord(SQLModel, table=True):
     """
-    Model class for a specific domain search
+    Model class for one specific domain search
     """
     check_time: str
     a: str
