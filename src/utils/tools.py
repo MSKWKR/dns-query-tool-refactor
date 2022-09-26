@@ -17,10 +17,9 @@ import tld
 import whois
 from ipwhois.asn import IPASN
 from ipwhois.net import Net
-
-from blacklist_checker import BlackListChecker
-from constants import EMAIL_TABLE, SRV_LIST
-from valid_result import Validator
+from utils.blacklist_checker import BlackListChecker
+from utils.constants import EMAIL_TABLE, SRV_LIST
+from utils.valid_result import Validator
 
 ToolBoxErrors = (
     ValueError, TypeError, EOFError, ConnectionResetError, TimeoutError, dns.exception.FormError,
@@ -353,8 +352,7 @@ class DNSToolBox:
 
         return ""
 
-    # ---------------------------------------------- ToolBox Properties -----------------------------------------
-    # @property
+    # ---------------------------------------------- ToolBox Features -----------------------------------------
     def o365_results(self) -> dict[str: List[str]]:
         o365_types = ["auto", "msoid", "lync", "365mx", "spf", "sipdir", "sipfed"]
         o365_results_dict = {
@@ -380,7 +378,6 @@ class DNSToolBox:
 
     # Since the tool wants the specific field for the ASN,
     # this is dirty code that I didn't change much
-    # @property
     def asn(self) -> dict[str:List[str]]:
         """
         Function for reading the ASN result parsed from search_ipwhois_asn(),
@@ -418,7 +415,6 @@ class DNSToolBox:
 
         return asn_dict
 
-    # @property
     def srv(self) -> dict[str: List[str]]:
         """
         Util for getting the srv record for the searched domain
@@ -440,7 +436,6 @@ class DNSToolBox:
 
         return srv_result_dict
 
-    # @property
     def xfr(self) -> List[str]:
         xfr_list = []
         try:
@@ -455,7 +450,6 @@ class DNSToolBox:
 
         return xfr_list
 
-    # @property
     def ptr(self) -> str:
         """
         Util function for getting the ptr record using reverse query
@@ -472,7 +466,6 @@ class DNSToolBox:
     # --------------------- whois details ----------------------
     # ["expiration_date", "registrar"]
     # not testing the following code since it's merely getting fields from the whois result
-    # @property
     def expiration_date(self) -> str:
         """
         Util for getting the expiration date for the searched domain
@@ -485,7 +478,6 @@ class DNSToolBox:
             return whois_result["expiration_date"]
         return ""
 
-    # @property
     def registrar(self) -> str:
         """
         Util for getting the registrar for the searched domain
@@ -499,7 +491,6 @@ class DNSToolBox:
         return ""
 
     # ---------------------- Email Provider ------------------------
-    # @property
     def email_provider(self) -> str:
         mx_record = self.get_result("mx")
         if len(mx_record) != 0:
@@ -552,6 +543,13 @@ class DNSToolBox:
     #  ------------------- Output to dict ----------------------------------------
     @property
     def domain_info(self) -> dict:
+        """
+        Property domain_info is the fetched result for the given domain.
+
+        :return: The dictionary result of the search result
+        :rtype: dict
+        """
+
         start_time = time.perf_counter()
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -611,31 +609,9 @@ def _main():
     continue_ = True
     while continue_:
         test_site = input("Enter Domain Name: ")
-        # start = time.perf_counter()
         toolbox.set_domain_string(test_site)
-        # finished_record_type = ["a", "aaaa", "mx", "soa", "www", "ns", "txt", "ipv4", "ipv6"]
-        # for dns_record_type in finished_record_type:
-        #     result = toolbox.get_result(dns_record_type)
-        #     print(f"{YELLOW_TITLE}{dns_record_type}:{BLANK_CUT} {result}\n")
-        #
-        # print(f"{YELLOW_TITLE}asn:{BLANK_CUT} {toolbox.asn}\n")
-        # print(f"{YELLOW_TITLE}xfr:{BLANK_CUT} {toolbox.xfr}\n")
-        # print(f"{YELLOW_TITLE}ptr:{BLANK_CUT} {toolbox.ptr}\n")
-        # print(f"{YELLOW_TITLE}registrar:{BLANK_CUT} {toolbox.registrar}\n")
-        # print(f"{YELLOW_TITLE}expiration date:{BLANK_CUT} {toolbox.expiration_date}\n")
-        # print(f"{YELLOW_TITLE}email_exchange_service:{BLANK_CUT} {toolbox.email_provider}\n")
-        # print(f"{YELLOW_TITLE}srv:{BLANK_CUT} {toolbox.srv}\n")
-        # print(f"{YELLOW_TITLE}o365:{BLANK_CUT} {toolbox.o365_results}\n")
-        # print(f"{YELLOW_TITLE}has_https:{BLANK_CUT} {toolbox.has_https()}\n")
-        # print(f"{YELLOW_TITLE}is_blacklisted:{BLANK_CUT} {toolbox.is_black_listed()}\n")
-        # print(f"{YELLOW_TITLE}check_time:{BLANK_CUT} {toolbox.check_time}\n")
-        #
-        # finish = time.perf_counter()
-        # print(f"Finished in {round(finish - start, 2)} second(s)")
-
         search_result = toolbox.domain_info
         pprint(search_result)
-        print(search_result["search_used_time"])
 
         if input("Do you want to continue? (y/n)").lower() == "n":
             continue_ = False

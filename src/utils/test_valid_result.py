@@ -1,7 +1,7 @@
 import pytest
+from utils.constants_for_test import different_incorrect_a_records, different_incorrect_aaaa_records
 
-from constants_for_test import different_incorrect_a_records, different_incorrect_aaaa_records
-from valid_result import Validator
+from utils.valid_result import Validator
 
 test_validator = Validator()
 
