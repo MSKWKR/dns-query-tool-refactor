@@ -4,6 +4,8 @@ raw_domain_check_data = [
     ("", None),
     ("ksjdhfskj", None),
     ("example.com", "example.com"),
+    ("example.xoxo", None),
+    ("example.io", "example.io"),
     ("http://example.com", "example.com"),
     ("https://www.example.com", "example.com"),
     ("'https://www.e{xam}ple.com'", "example.com"),
