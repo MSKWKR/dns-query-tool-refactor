@@ -19,7 +19,8 @@ correct_string_results = [
     ("freedom.net.tw", "a", "122.146.12.7"),
     ("example.com", "aaaa", "2606:2800:220:1:248:1893:25c8:1946"),
     ("freedom.net.tw", "mx", "0 freedom-net-tw.mail.protection.outlook.com."),
-    ("example.com", "www", "www.example.com")
+    ("example.com", "www", "www.example.com"),
+    ("example.com", "soa", "ns.icann.org. noc.dns.icann.org. 2022091110 7200 3600 1209600 3600"),
 ]
 
 correct_list_results = [
@@ -33,9 +34,18 @@ correct_list_results = [
                                '"google-site-verification=P1h5z2UCOpDPBweJ8G9d5VCpLdQ0E27b8yl11N8NFPY"'}
      ),
     ("freedom.net.tw", "ipv4", {'104.236.202.184', '128.199.119.242', '122.146.12.30'}),
-    ("example.com", "ipv6", {'2001:500:8f::53', '2001:500:8d::53'})
+    ("example.com", "ipv6", {'2001:500:8f::53', '2001:500:8d::53'}),
 ]
 
+correct_asn = [
+    ("example.com", {'asn_list': ['26710', '26710'],
+                     'country_list': ['US', 'US'],
+                     'description_list': ['ICANN-ANYCASTED-SERVICES, US',
+                                          'ICANN-ANYCASTED-SERVICES, US'],
+                     'ip_list': ['199.43.133.53', '199.43.135.53'],
+                     'registry_list': ['arin', 'arin']}),
+
+]
 # -------------------------------- Constants for test_valid_result -------------------------------------
 # a
 different_incorrect_a_records = (
