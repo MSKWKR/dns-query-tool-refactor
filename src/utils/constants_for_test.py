@@ -91,14 +91,8 @@ different_incorrect_mx_records = (
     "g" * 257,
 )
 
-different_incorrect_soa_records = (
-    "g" * 257,
-    "wlkjmsldfmlkjf",
-)
-
 different_incorrect_srv_records = (
     # "",  # shouldn't pass
-    "g" * 257,
     "wlkjmsldfmlkjf",
 )
 
