@@ -72,10 +72,8 @@ different_incorrect_aaaa_records = (
 
 # -------------------------------- Constants for test_blacklist_checker -------------------------------------
 
-blacklisted_sites = (
-    "subtitleseeker.com",
-    "financereports.co",
-    "iranact.co",
-    "totalpad.com",
-    "salescript.info"
+non_blacklisted_sites = (
+    "example.com",
+    "google.com",
+    "freedom.net.tw"
 )
