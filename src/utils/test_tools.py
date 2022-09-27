@@ -1,6 +1,7 @@
 import pytest
 
-from src.utils.constants_for_test import raw_domain_check_data, correct_string_results, correct_list_results
+from src.utils.constants_for_test import raw_domain_check_data, correct_string_results, correct_list_results, \
+    correct_asn
 from src.utils.tools import DNSToolBox
 
 # @pytest.fixture
@@ -44,3 +45,15 @@ def test_has_https(domain):
     have = newToolBox.has_https()
     expect = True
     assert have == expect
+
+
+@pytest.mark.parametrize("domain, expected", correct_asn)
+def test_asn(domain, expected):
+    newToolBox.set_domain_string(domain)
+    have = newToolBox.asn()
+    expect = expected
+    assert have == expect
+
+# @pytest.mark.parametrize("domain, expected", ["example.com"])
+# def test_srv(domain, expected):
+#     pass
