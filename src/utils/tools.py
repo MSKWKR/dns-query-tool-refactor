@@ -476,7 +476,7 @@ class DNSToolBox:
         """
         whois_result = self.search_whois()
         if whois_result:
-            return whois_result["expiration_date"]
+            return str(whois_result["expiration_date"])
         return ""
 
     def registrar(self) -> str:
