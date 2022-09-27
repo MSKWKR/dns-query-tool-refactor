@@ -92,14 +92,14 @@ class Validator:
                 return True
 
             case "MX":
+                if len(search_result) >= 256:
+                    return False
                 return True
 
-            case "SOA" | "SRV":
+            case "SRV":
                 # might have empty results
                 if search_result == "":
                     return True
-                elif len(search_result) >= 256:
-                    return False
                 # soa and srv record should at least contain domain
                 elif url not in search_result:
                     return False
