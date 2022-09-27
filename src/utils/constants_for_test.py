@@ -38,13 +38,20 @@ correct_list_results = [
 ]
 
 correct_asn = [
-    ("example.com", {'asn_list': ['26710', '26710'],
-                     'country_list': ['US', 'US'],
-                     'description_list': ['ICANN-ANYCASTED-SERVICES, US',
-                                          'ICANN-ANYCASTED-SERVICES, US'],
-                     'ip_list': ['199.43.133.53', '199.43.135.53'],
-                     'registry_list': ['arin', 'arin']}),
+    (
+        "example.com", {
+            'asn_list': {'26710', '26710'},
+            'country_list': {'US', 'US'},
+            'description_list': {'ICANN-ANYCASTED-SERVICES, US', 'ICANN-ANYCASTED-SERVICES, US'},
+            'ip_list': {'199.43.133.53', '199.43.135.53'},
+            'registry_list': {'arin', 'arin'}
+        }
+    ),
 
+]
+
+correct_srv = [
+    ("example.com", {'TCP': [], 'TLS': [], 'UDP': []})
 ]
 # -------------------------------- Constants for test_valid_result -------------------------------------
 # a
