@@ -6,14 +6,13 @@ from .constants import SPECIAL_ADDRESS_BLOCKS
 
 
 class Validator:
-    def __init__(self):
-        pass
 
-    @staticmethod
-    def is_valid(record_type: str, search_result: any) -> bool:
+    @classmethod
+    def is_valid(cls, url: str, record_type: str, search_result: any) -> bool:
         """
         Function that checks whether the given search_result with the matched record type is valid.
 
+        :param url:
         :param record_type: The DNS record type to check
         :type: str
 
@@ -95,7 +94,19 @@ class Validator:
             case "MX":
                 return True
 
-            case "SOA":
+            case "SOA" | "SRV":
+                # might have empty results
+                if search_result == "":
+                    return True
+                elif len(search_result) >= 256:
+                    return False
+                # soa and srv record should at least contain domain
+                elif url not in search_result:
+                    return False
+
+                return True
+
+            case _:
                 return True
 
 
