@@ -76,7 +76,7 @@ class DNSToolBox:
         """
 
         pattern = '[^A-Za-z0-9.:/]'
-        input_domain = re.sub(pattern=pattern, repl="", string=input_domain)
+        input_domain = re.sub(pattern=pattern, repl="", string=input_domain).lower()
         try:
             # fixing protocol means the protocol we use now is http and https, ftp will fail
             input_domain = tld.get_fld(input_domain, fix_protocol=True)
@@ -97,6 +97,8 @@ class DNSToolBox:
         """
 
         self._domain_string = DNSToolBox.parse_raw_domain(domain_string)
+        # self._validator = Validator(self._domain_string)
+
         return self._domain_string
 
     # ------------------------- Search Tools ------------------------------------
@@ -231,13 +233,17 @@ class DNSToolBox:
             :return: The searched srv records
             :rtype: List[str]
         """
+        srv = "SRV"
+
         proto = proto.lower()
         srv_result_list = []
         for n in range(len(SRV_LIST)):
             try:
-                srv_record = dns.resolver.resolve(f"_{SRV_LIST[n]}._{proto}.{self._domain_string}", "SRV")
+                srv_record = dns.resolver.resolve(f"_{SRV_LIST[n]}._{proto}.{self._domain_string}", srv)
                 for data in srv_record:
-                    srv_result_list.append(data.to_text())
+                    srv_result = data.to_text()
+                    if self._validator.is_valid(self._domain_string, srv, srv_result):
+                        srv_result_list.append(srv_result)
 
             except ToolBoxErrors as error:
                 # print(f"{error=}")
@@ -261,13 +267,14 @@ class DNSToolBox:
         match record_type:
             case ("A" | "AAAA" | "SOA" | "MX"):
                 answers = self.search(record_type)
+
                 result = ""
                 if answers:
                     # answers is an iterator of type records, need to loop through in order to get the data
                     for answer in answers:
                         # answer is a dns.resolver.Answer instance, return type should be a converted string
                         result = str(answer)
-                        if not self._validator.is_valid(record_type, result):
+                        if not self._validator.is_valid(self._domain_string, record_type, result):
                             # return an empty result if the given answer is incorrect
                             print(f"Incorrect result: {result}")
                             return ""
@@ -301,7 +308,10 @@ class DNSToolBox:
                     try:
                         a = dns.resolver.resolve(name, a_request_type)
                         for a_data in a:
-                            ip_list.append(str(a_data))
+                            # check whether ip is valid first
+                            a_result = str(a_data)
+                            if self._validator.is_valid(self._domain_string, a_request_type, a_result):
+                                ip_list.append(a_result)
                     except ToolBoxErrors as error:
                         print(f"{error=}")
                 return ip_list
