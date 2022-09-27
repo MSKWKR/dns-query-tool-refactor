@@ -81,10 +81,25 @@ different_incorrect_aaaa_records = (
     "2001::ffff:ffff:ffff:ffff:ffff:ffff",  # Teredo tunneling
     "2001:2f:ffff:ffff:ffff:ffff:ffff:ffff",  # ORCHIDv2
     "2001:db8:ffff:ffff:ffff:ffff:ffff:ffff",  # Addresses used in documentation and example source code
-    "2002:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  # The 6to4 addressing scheme
+    # "2002:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  # The 6to4 addressing scheme
     "fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  # Unique Local Address
     "fe80::ffff:ffff:ffff:ffff",  # Link-local Address
     "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"  # Multicast Address
+)
+
+different_incorrect_mx_records = (
+    "g" * 257,
+)
+
+different_incorrect_soa_records = (
+    "g" * 257,
+    "wlkjmsldfmlkjf",
+)
+
+different_incorrect_srv_records = (
+    # "",  # shouldn't pass
+    "g" * 257,
+    "wlkjmsldfmlkjf",
 )
 
 # -------------------------------- Constants for test_blacklist_checker -------------------------------------
