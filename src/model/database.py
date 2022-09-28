@@ -2,10 +2,11 @@ from typing import Optional
 
 from sqlalchemy import engine
 from sqlalchemy.exc import SQLAlchemyError
-from sqlmodel import SQLModel, create_engine
+from sqlmodel import SQLModel, create_engine, Session
 
 
-def _instantiate_engine(db_url: str, echo: bool = True) -> Optional[engine.Engine]:
+# ------------------------------------------- database creation -------------------------------------------------------
+def instantiate_engine(db_url: str, echo: bool = True) -> Optional[engine.Engine]:
     """
     Implicit function that instantiates the sqlalchemy database engine.
 
@@ -28,27 +29,52 @@ def _instantiate_engine(db_url: str, echo: bool = True) -> Optional[engine.Engin
     return new_engine
 
 
-def create_database_and_tables(db_url: str) -> None:
+def create_database_and_tables(db_engine: engine.Engine) -> None:
     """
     Function to create a database and create all the tables that were automatically registered in SQLModel.metadata
     to the given location
 
-    :param db_url: Location for the database
+    :param db_engine: The database engine
     :type: str
 
     :return: None
     :rtype: None
     """
 
-    new_engine = _instantiate_engine(db_url)
-    if new_engine:
-        SQLModel.metadata.create_all(new_engine)
+    SQLModel.metadata.create_all(db_engine)
+
+
+# ------------------------------------------- database operation -------------------------------------------------------
+def add_data(db_engine: engine.Engine, data: any) -> None:
+    """
+    Add the given data to the database.
+
+    :param db_engine: The connection engine for the database
+    :type: engine.Engine
+
+    :param data: The given class data object from the search result
+    :type: any
+
+    :return:
+    :rtype: None
+    """
+
+    try:
+        with Session(db_engine) as session:
+            session.add(data)
+            session.commit()
+    except SQLAlchemyError as error:
+        print(f"{error=}")
+        return
+
+
+def read_data(db_engine: engine.Engine):
+    with Session(db_engine) as session:
+        pass
 
 
 def _main():
-    sqlite_file_name = "database.db"
-    sqlite_url = f"sqlite:///{sqlite_file_name}"
-    create_database_and_tables(sqlite_url)
+    pass
 
 
 if __name__ == "__main__":
