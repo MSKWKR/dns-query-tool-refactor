@@ -1,10 +1,10 @@
-import pickle
-from pprint import pprint
+from sqlalchemy_utils import database_exists
 
-from sqlmodel import create_engine, SQLModel, Session
-
-from src.model.models import to_domain, to_DNS_record
+from src.model import database, models, utils
 from src.utils.tools import DNSToolBox
+
+sqlite_file_name = "domain_record.db"
+sqlite_url = f"sqlite:///{sqlite_file_name}"
 
 
 def main():
@@ -20,24 +20,23 @@ def main():
 
         toolbox.set_domain_string(domain_to_check)
         print("Fetching Records...")
-        domain_info = to_domain(domain_to_check)
-        a = toolbox.domain_info
-        for record_key in a:
-            a[record_key] = pickle.dumps(a[record_key])
-        pprint(a)
-        dns_record = to_DNS_record(a)
 
-        print("Records Fetched")
+        domain = models.to_domain(domain_to_check)
+        domain_search_result = utils.dictionary_value_to_bytes(search_result=toolbox.domain_info)
+        dns_record = models.to_DNS_record(domain_search_result)
+        print("Records Fetched.\n")
+        print("Adding to database.\n")
 
-        engine = create_engine("sqlite:///database.db")
-        SQLModel.metadata.create_all(engine)
+        engine = database.instantiate_engine(db_url=sqlite_url)
+        if not database_exists(url=sqlite_url):
+            database.create_database_and_tables(engine)
 
-        with Session(engine) as session:
-            session.add(domain_info)
-            # session.add(dns_record)
-            session.commit()
+        database.add_data(db_engine=engine, data=domain)
+        database.add_data(db_engine=engine, data=dns_record)
+        print("Added to database.\n")
 
-        continue_ = False
+        if input("Do you want to continue? (y/n)").lower() == "n":
+            continue_ = False
 
 
 if __name__ == "__main__":
