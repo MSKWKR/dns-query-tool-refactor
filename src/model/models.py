@@ -46,6 +46,7 @@ class DNSRecord(SQLModel, table=True):
 def to_domain(domain: str) -> Optional[Domain]:
     """
     The helper function for turning the domain string into a Domain class
+
     :param domain: The checked domain string
     :type: str
 
@@ -66,6 +67,7 @@ def to_domain(domain: str) -> Optional[Domain]:
 def to_DNS_record(domain_search_result: dict) -> Optional[DNSRecord]:
     """
     The helper function for turning the domain string into a Domain class
+
     :param domain_search_result: The result for the DNS search
     :type: dict
 
