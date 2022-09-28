@@ -1,5 +1,6 @@
 from typing import Optional
 
+import sqlalchemy.exc
 from sqlalchemy import engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import SQLModel, create_engine, Session, select
@@ -107,16 +108,33 @@ def domain_name_exists(db_engine: engine.Engine, domain_name: str) -> bool:
     with Session(db_engine) as session:
         statement = select(Domain).where(Domain.domain_string == domain_name)
         # Since there should be only one specific domain name in domain table, we fetch one
-        result = session.exec(statement).one()
+        result = None
+        try:
+            result = session.exec(statement).one()
+        except sqlalchemy.exc.NoResultFound:
+            print(f"Record data with domain name: {domain_name} doesn't exist")
+
         return True if result else False
 
 
 def read_data_from_domain_name(db_engine: engine.Engine, domain_name: str) -> Optional[DNSRecord]:
+    """
+    Function to read the latest data with the given input domain
+
+    :param db_engine: The connection engine for the database
+    :type: engine.Engine
+
+    :param domain_name: Domain string
+    :type: str
+
+    :return: The latest fetched result
+    :rtype: Optional[DNSRecord]
+    """
     try:
         with Session(db_engine) as session:
             statement = select(DNSRecord).where(DNSRecord.domain_name == domain_name)
-            result = session.exec(statement).one()
-            return result
+            result = session.exec(statement).all()
+            return result[-1]
     except SQLAlchemyError as error:
         print(f"Data reading error: {error}")
         return
