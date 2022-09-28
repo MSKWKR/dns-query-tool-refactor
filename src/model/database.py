@@ -2,7 +2,9 @@ from typing import Optional
 
 from sqlalchemy import engine
 from sqlalchemy.exc import SQLAlchemyError
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import SQLModel, create_engine, Session, select
+
+from src.model.models import DNSRecord, Domain
 
 
 # ------------------------------------------- database creation -------------------------------------------------------
@@ -45,9 +47,38 @@ def create_database_and_tables(db_engine: engine.Engine) -> None:
 
 
 # ------------------------------------------- database operation -------------------------------------------------------
-def add_data(db_engine: engine.Engine, data: any) -> None:
+def add_domain_data(db_engine: engine.Engine, data: any) -> None:
     """
-    Add the given data to the database.
+    Add the given domain data to the database.
+
+    :param db_engine: The connection engine for the database
+    :type: engine.Engine
+
+    :param data: The given class data object from the search result
+    :type: any
+
+    :return:
+    :rtype: None
+    """
+
+    try:
+        if not domain_name_exists(db_engine, data.domain_string):
+            print("Adding to database.\n")
+            with Session(db_engine) as session:
+                session.add(data)
+                session.commit()
+                print("Added to database.\n")
+        else:
+            print("Domain Name Exists.")
+
+    except SQLAlchemyError as error:
+        print(f"{error=}")
+        return
+
+
+def add_domain_record_data(db_engine: engine.Engine, data: any) -> None:
+    """
+    Add the given domain data to the database.
 
     :param db_engine: The connection engine for the database
     :type: engine.Engine
@@ -71,9 +102,24 @@ def add_data(db_engine: engine.Engine, data: any) -> None:
         return
 
 
-def read_data(db_engine: engine.Engine):
+def domain_name_exists(db_engine: engine.Engine, domain_name: str) -> bool:
+    """"""
     with Session(db_engine) as session:
-        pass
+        statement = select(Domain).where(Domain.domain_string == domain_name)
+        # Since there should be only one specific domain name in domain table, we fetch one
+        result = session.exec(statement).one()
+        return True if result else False
+
+
+def read_data_from_domain_name(db_engine: engine.Engine, domain_name: str) -> Optional[DNSRecord]:
+    try:
+        with Session(db_engine) as session:
+            statement = select(DNSRecord).where(DNSRecord.domain_name == domain_name)
+            result = session.exec(statement).one()
+            return result
+    except SQLAlchemyError as error:
+        print(f"Data reading error: {error}")
+        return
 
 
 def _main():
