@@ -560,7 +560,7 @@ class DNSToolBox:
         :return: The dictionary result of the search result
         :rtype: dict
         """
-
+        domain_string = self._domain_string
         start_time = time.perf_counter()
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -587,6 +587,7 @@ class DNSToolBox:
             is_blacklisted = executor.submit(self.is_black_listed).result()
 
         domain_search_result = {
+            "domain_name": domain_string,
             "check_time": check_time,
             "a": a_record,
             "aaaa": aaaa_record,

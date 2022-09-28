@@ -11,7 +11,7 @@ def dictionary_value_to_bytes(search_result: dict) -> dict:
     :rtype: dict
     """
     for record_key in search_result:
-        if record_key in ["search_used_time", "check_time"]:
+        if record_key in ["domain_name", "search_used_time", "check_time"]:
             continue
 
         search_result[record_key] = pickle.dumps(search_result[record_key])

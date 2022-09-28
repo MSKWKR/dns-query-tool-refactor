@@ -19,6 +19,7 @@ class DNSRecord(SQLModel, table=True):
     """
     #  After serializing, all data are bytes
     record_id: Optional[int] = Field(default=None, primary_key=True)
+    domain_name: str
     search_used_time: str
     check_time: str
     a: bytes  # str
@@ -75,10 +76,11 @@ def to_DNS_record(domain_search_result: dict) -> Optional[DNSRecord]:
     :rtype: Optional[Domain]
     """
 
-    if len(domain_search_result) != 21:
+    if len(domain_search_result) != 22:
         return None
     try:
         record = DNSRecord(
+            domain_name=domain_search_result["domain_name"],
             check_time=domain_search_result["check_time"],
             search_used_time=domain_search_result["search_used_time"],
             a=domain_search_result["a"],

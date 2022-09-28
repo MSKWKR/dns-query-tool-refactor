@@ -60,9 +60,12 @@ def add_data(db_engine: engine.Engine, data: any) -> None:
     """
 
     try:
+        print("Adding to database.\n")
         with Session(db_engine) as session:
             session.add(data)
             session.commit()
+            print("Added to database.\n")
+
     except SQLAlchemyError as error:
         print(f"{error=}")
         return
