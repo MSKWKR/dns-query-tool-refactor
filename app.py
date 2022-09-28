@@ -1,3 +1,4 @@
+import pickle
 from pprint import pprint
 
 from sqlmodel import create_engine, SQLModel, Session
@@ -16,10 +17,13 @@ def main():
 
     while continue_:
         domain_to_check = input("Enter Domain Name: ")
+
         toolbox.set_domain_string(domain_to_check)
         print("Fetching Records...")
         domain_info = to_domain(domain_to_check)
         a = toolbox.domain_info
+        for record_key in a:
+            a[record_key] = pickle.dumps(a[record_key])
         pprint(a)
         dns_record = to_DNS_record(a)
 
