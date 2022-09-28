@@ -38,7 +38,7 @@ class DNSToolBox:
     # the tool is defaulted with nothing
     def __init__(self):
         """Initializes class attribute"""
-        self.check_time = str(datetime.datetime.now(pytz.timezone("Asia/Taipei")))
+        self.check_time = None
 
         self._domain_string = None
         self._res = dns.resolver.Resolver()
@@ -560,7 +560,8 @@ class DNSToolBox:
         :return: The dictionary result of the search result
         :rtype: dict
         """
-        domain_string = self._domain_string
+        # Update check_time every search
+        self.check_time = str(datetime.datetime.now(pytz.timezone("Asia/Taipei")))
         start_time = time.perf_counter()
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -587,7 +588,7 @@ class DNSToolBox:
             is_blacklisted = executor.submit(self.is_black_listed).result()
 
         domain_search_result = {
-            "domain_name": domain_string,
+            "domain_name": self._domain_string,
             "check_time": check_time,
             "a": a_record,
             "aaaa": aaaa_record,
