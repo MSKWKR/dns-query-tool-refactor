@@ -9,6 +9,10 @@ from src.model.models import DNSRecord, Domain
 
 
 class DomainDatabase:
+    """
+    DomainDatabase handles operations for sqlite3
+    """
+
     def __init__(self):
         self.db_engine = None
         self._db_url = None
