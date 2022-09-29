@@ -35,6 +35,7 @@ class RedisModel:
 
             ping = client.ping()
             if ping:
+                self.client = client
                 return client
 
         except (redis.AuthenticationError, ConnectionError) as error:
