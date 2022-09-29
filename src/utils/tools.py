@@ -560,8 +560,8 @@ class DNSToolBox:
         :return: The dictionary result of the search result
         :rtype: dict
         """
-        # Update check_time every search
-        self.check_time = str(datetime.datetime.now(pytz.timezone("Asia/Taipei")))
+        # Update check_time every search -> format: 2013-09-18 11:16:32
+        self.check_time = str(datetime.datetime.now(pytz.timezone("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S"))
         start_time = time.perf_counter()
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
