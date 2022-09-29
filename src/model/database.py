@@ -8,136 +8,130 @@ from sqlmodel import SQLModel, create_engine, Session, select
 from src.model.models import DNSRecord, Domain
 
 
-# ------------------------------------------- database creation -------------------------------------------------------
-def instantiate_engine(db_url: str, echo: bool = True) -> Optional[engine.Engine]:
-    """
-    Implicit function that instantiates the sqlalchemy database engine.
+class DomainDatabase:
+    def __init__(self):
+        self.db_engine = None
+        self._db_url = None
 
-    :param db_url: Location for the database
-    :type: str
+    # ------------------------------------------- database creation -------------------------------------------------------
+    def set_db_url(self, url: str):
+        self._db_url = url
 
-    :param echo: The configuring logging parameter. if True, the connection pool will log informational output such as when connections are invalidated as well as when connections are recycled to the default log handler,
-                 which defaults to sys.stdout for output. If set to the string "debug", the logging will include pool checkouts and checkins.
-    :type: bool
+    def instantiate_engine(self, echo: bool = True) -> Optional[engine.Engine]:
+        """
+        Function that instantiates the sqlalchemy database engine.
 
-    :return: The created engine if successful, else None
-    :rtype: sqlalchemy.engine.Engine or None
-    """
-    new_engine = None
-    try:
-        new_engine = create_engine(db_url, echo=echo)
-    except SQLAlchemyError as error:
-        print(f"{error=}")
+        :param echo: The configuring logging parameter. if True, the connection pool will log informational output such as when connections are invalidated as well as when connections are recycled to the default log handler,
+                     which defaults to sys.stdout for output. If set to the string "debug", the logging will include pool checkouts and checkins.
+        :type: bool
 
-    return new_engine
+        :return: The created engine if successful, else None
+        :rtype: sqlalchemy.engine.Engine or None
+        """
+        new_engine = None
+        try:
+            new_engine = create_engine(self._db_url, echo=echo)
+        except SQLAlchemyError as error:
+            print(f"{error=}")
 
+        return new_engine
 
-def create_database_and_tables(db_engine: engine.Engine) -> None:
-    """
-    Function to create a database and create all the tables that were automatically registered in SQLModel.metadata
-    to the given location
+    def create_database_and_tables(self) -> None:
+        """
+        Function to create a database and create all the tables that were automatically registered in SQLModel.metadata
+        to the given location
 
-    :param db_engine: The database engine
-    :type: str
+        :return: None
+        :rtype: None
+        """
 
-    :return: None
-    :rtype: None
-    """
+        SQLModel.metadata.create_all(self.db_engine)
 
-    SQLModel.metadata.create_all(db_engine)
+    # ------------------------------------------- database operation -------------------------------------------------------
+    def add_domain_data(self, domain_data: Domain) -> None:
+        """
+        Add the given domain data to the database.
 
+        :param domain_data: The given class data object from the search result
+        :type: any
 
-# ------------------------------------------- database operation -------------------------------------------------------
-def add_domain_data(db_engine: engine.Engine, data: any) -> None:
-    """
-    Add the given domain data to the database.
+        :return:
+        :rtype: None
+        """
 
-    :param db_engine: The connection engine for the database
-    :type: engine.Engine
+        try:
+            if not self.domain_name_exists(domain_data.domain_string):
+                print("Adding to database.\n")
+                with Session(self.db_engine) as session:
+                    session.add(domain_data)
+                    session.commit()
+                    print("Added to database.\n")
+            else:
+                print("Domain Name Exists.")
 
-    :param data: The given class data object from the search result
-    :type: any
+        except SQLAlchemyError as error:
+            print(f"{error=}")
+            return
 
-    :return:
-    :rtype: None
-    """
+    def add_domain_record_data(self, domain_record_data: DNSRecord) -> None:
+        """
+        Add the given domain data to the database.
 
-    try:
-        if not domain_name_exists(db_engine, data.domain_string):
+        :param domain_record_data: The given class data object from the search result
+        :type: DNS
+
+        :return:
+        :rtype: None
+        """
+        domain_record_data.domain_id = self.get_domain_id(domain_record_data.domain_name)
+        try:
             print("Adding to database.\n")
-            with Session(db_engine) as session:
-                session.add(data)
+            with Session(self.db_engine) as session:
+                session.add(domain_record_data)
                 session.commit()
                 print("Added to database.\n")
-        else:
-            print("Domain Name Exists.")
 
-    except SQLAlchemyError as error:
-        print(f"{error=}")
-        return
+        except SQLAlchemyError as error:
+            print(f"{error=}")
+            return
 
+    def domain_name_exists(self, domain_name: str) -> bool:
+        """"""
+        with Session(self.db_engine) as session:
+            statement = select(Domain).where(Domain.domain_string == domain_name)
+            # Since there should be only one specific domain name in domain table, we fetch one
+            result = None
+            try:
+                result = session.exec(statement).one()
+            except sqlalchemy.exc.NoResultFound:
+                print(f"Record data with domain name: {domain_name} doesn't exist")
 
-def add_domain_record_data(db_engine: engine.Engine, data: any) -> None:
-    """
-    Add the given domain data to the database.
+            return True if result else False
 
-    :param db_engine: The connection engine for the database
-    :type: engine.Engine
+    def read_data_from_domain_name(self, domain_name: str) -> Optional[DNSRecord]:
+        """
+        Function to read the latest data with the given input domain
 
-    :param data: The given class data object from the search result
-    :type: any
+        :param domain_name: Domain string
+        :type: str
 
-    :return:
-    :rtype: None
-    """
-
-    try:
-        print("Adding to database.\n")
-        with Session(db_engine) as session:
-            session.add(data)
-            session.commit()
-            print("Added to database.\n")
-
-    except SQLAlchemyError as error:
-        print(f"{error=}")
-        return
-
-
-def domain_name_exists(db_engine: engine.Engine, domain_name: str) -> bool:
-    """"""
-    with Session(db_engine) as session:
-        statement = select(Domain).where(Domain.domain_string == domain_name)
-        # Since there should be only one specific domain name in domain table, we fetch one
-        result = None
+        :return: The latest fetched result
+        :rtype: Optional[DNSRecord]
+        """
         try:
+            with Session(self.db_engine) as session:
+                statement = select(DNSRecord).where(DNSRecord.domain_name == domain_name)
+                result = session.exec(statement).all()
+                return result[-1]
+        except SQLAlchemyError as error:
+            print(f"Data reading error: {error}")
+            return
+
+    def get_domain_id(self, domain_name: str) -> int:
+        with Session(self.db_engine) as session:
+            statement = select(Domain).where(Domain.domain_string == domain_name)
             result = session.exec(statement).one()
-        except sqlalchemy.exc.NoResultFound:
-            print(f"Record data with domain name: {domain_name} doesn't exist")
-
-        return True if result else False
-
-
-def read_data_from_domain_name(db_engine: engine.Engine, domain_name: str) -> Optional[DNSRecord]:
-    """
-    Function to read the latest data with the given input domain
-
-    :param db_engine: The connection engine for the database
-    :type: engine.Engine
-
-    :param domain_name: Domain string
-    :type: str
-
-    :return: The latest fetched result
-    :rtype: Optional[DNSRecord]
-    """
-    try:
-        with Session(db_engine) as session:
-            statement = select(DNSRecord).where(DNSRecord.domain_name == domain_name)
-            result = session.exec(statement).all()
-            return result[-1]
-    except SQLAlchemyError as error:
-        print(f"Data reading error: {error}")
-        return
+            return result.id
 
 
 def _main():
