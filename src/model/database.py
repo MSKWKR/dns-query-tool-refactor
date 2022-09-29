@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import Optional
 
 import sqlalchemy.exc
@@ -38,7 +39,8 @@ class DomainDatabase:
         except SQLAlchemyError as error:
             print(f"{error=}")
 
-        return new_engine
+        self.db_engine = new_engine
+        return self.db_engine
 
     def create_database_and_tables(self) -> None:
         """
@@ -100,7 +102,15 @@ class DomainDatabase:
             return
 
     def domain_name_exists(self, domain_name: str) -> bool:
-        """"""
+        """
+        Util checking whether the domain name exists within table Domain
+        :param domain_name: Domain string
+        :type: str
+
+        :return: True if exists else False
+        :rtype: bool
+        """
+
         with Session(self.db_engine) as session:
             statement = select(Domain).where(Domain.domain_string == domain_name)
             # Since there should be only one specific domain name in domain table, we fetch one
@@ -132,10 +142,54 @@ class DomainDatabase:
             return
 
     def get_domain_id(self, domain_name: str) -> int:
+        """
+        Helper function for checking domain id from the Domain table
+
+        :param domain_name:Domain string
+        :type: str
+
+        :return: The domain id
+        :rtype: int
+        """
         with Session(self.db_engine) as session:
             statement = select(Domain).where(Domain.domain_string == domain_name)
             result = session.exec(statement).one()
             return result.id
+
+    def get_last_record_search_time(self, domain_name: str) -> str:
+        """
+        Helper function to fetch the last search time for the latest record within database
+
+        :param domain_name: Domain string
+        :type: str
+
+        :return: String format of the last check time
+        :rtype: str
+        """
+        with Session(self.db_engine) as session:
+            statement = select(DNSRecord).where(DNSRecord.domain_name == domain_name)
+            last_result = session.exec(statement).all()[-1]
+            return last_result.check_time
+
+    def record_timeout(self, domain_name: str) -> bool:
+        """
+        Check if record within database isn't up-to-date
+
+        :param domain_name: Domain string
+        :type: str
+
+        :return: True if data isn't up-to-date, else False
+        :rtype: bool
+        """
+        now = datetime.now()  # pytz.timezone("Asia/Taipei"))
+        last_record_search_time: datetime = datetime.strptime(self.get_last_record_search_time(domain_name=domain_name),
+                                                              "%Y-%m-%d %H:%M:%S")
+
+        # Possible bug here, might use within different timezone
+        if last_record_search_time - now >= timedelta(minutes=5):  # days=3):
+            return True
+
+        return False
 
 
 def _main():
