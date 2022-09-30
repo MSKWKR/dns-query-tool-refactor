@@ -66,6 +66,7 @@ class RedisModel:
                 ex=self.data_expiration_time,
                 value=value,
             )
+            print("Added to Cache")
         except redis.exceptions.DataError as error:
             print(f"Redis Error: {error}")
 
