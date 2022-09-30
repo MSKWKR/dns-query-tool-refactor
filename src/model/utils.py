@@ -30,3 +30,17 @@ def bytes_decrypt(bytes_form_data: bytes) -> any:
     :rtype: any
     """
     return pickle.loads(bytes_form_data)
+
+
+def result_decrypt(encrypted_result: dict) -> None:
+    """
+    Helper function to decrypt all the bytes value within a dictionary
+
+    :param encrypted_result: A dictionary that has pickled bytes value
+
+    :return:
+    :rtype: None
+    """
+    for record_type in encrypted_result:
+        if type(encrypted_result[record_type]) is bytes:
+            encrypted_result[record_type] = bytes_decrypt(encrypted_result[record_type])
