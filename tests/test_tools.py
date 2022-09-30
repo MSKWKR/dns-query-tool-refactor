@@ -1,8 +1,8 @@
 import pytest
 
-from src.utils.constants_for_test import raw_domain_check_data, correct_string_results, correct_list_results, \
-    correct_asn, correct_srv
 from src.utils.tools import DNSToolBox
+from tests.constants_for_test import raw_domain_check_data, correct_string_results, correct_list_results, \
+    correct_asn, correct_srv
 
 # @pytest.fixture
 # def newToolBox():
