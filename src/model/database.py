@@ -156,7 +156,7 @@ class DomainDatabase:
             result = session.exec(statement).one()
             return result.id
 
-    def get_last_record_search_time(self, domain_name: str) -> str:
+    def get_last_record_search_time(self, domain_name: str) -> Optional[str]:
         """
         Helper function to fetch the last search time for the latest record within database
 
@@ -166,10 +166,17 @@ class DomainDatabase:
         :return: String format of the last check time
         :rtype: str
         """
-        with Session(self.db_engine) as session:
-            statement = select(DNSRecord).where(DNSRecord.domain_name == domain_name)
-            last_result = session.exec(statement).all()[-1]
-            return last_result.check_time
+        last_check = None
+        try:
+            with Session(self.db_engine) as session:
+                statement = select(DNSRecord).where(DNSRecord.domain_name == domain_name)
+                last_result = session.exec(statement).all()[-1]
+                last_check = last_result.check_time
+
+        except sqlalchemy.exc.NoResultFound:
+            print(f"Record data with domain name: {domain_name} doesn't exist")
+
+        return last_check
 
     def record_timeout(self, domain_name: str) -> bool:
         """
@@ -182,18 +189,69 @@ class DomainDatabase:
         :rtype: bool
         """
         now = datetime.now()  # pytz.timezone("Asia/Taipei"))
-        last_record_search_time: datetime = datetime.strptime(self.get_last_record_search_time(domain_name=domain_name),
-                                                              "%Y-%m-%d %H:%M:%S")
+        last_record_search_time = datetime.strptime(self.get_last_record_search_time(domain_name=domain_name),
+                                                    "%Y-%m-%d %H:%M:%S")
+
+        pass_time = (now - last_record_search_time).seconds
+        expire_time = timedelta(minutes=5).seconds
+
+        # time to live
+        ttl = expire_time - pass_time
+        print(f"{ttl=}")
 
         # Possible bug here, might use within different timezone
-        if last_record_search_time - now >= timedelta(minutes=5):  # days=3):
+        if ttl <= 0:
             return True
 
         return False
 
+    def read_dns_record(self, input_record: DNSRecord) -> dict:
+        """
+        Function to read from the fetched database value
+        :param input_record: The result fetched from the database
+        :type: DNSRecord
+
+        :return: The transformed dictionary
+        :rtype: dict
+        """
+        with Session(self.db_engine):
+            record = input_record
+            result = {
+                "domain_name": record.domain_name,
+                "check_time": record.check_time,
+                "a": record.a,
+                "aaaa": record.aaaa,
+                "mx": record.mx,
+                "soa": record.soa,
+                "www": record.www,
+                "ns": record.ns,
+                "txt": record.txt,
+                "ipv4": record.ipv4,
+                "ipv6": record.ipv6,
+                "asn": record.asn,
+                "xfr": record.xfr,
+                "ptr": record.ptr,
+                "registrar": record.registrar,
+                "expiration_date": record.expiration_date,
+                "email_exchange_service": record.email_exchange_service,
+                "srv": record.srv,
+                "o365": record.o365,
+                "has_https": record.has_https,
+                "is_blacklisted": record.is_blacklisted
+            }
+            return result
+
 
 def _main():
-    pass
+    d = DomainDatabase()
+    d.set_db_url(f"sqlite:///../../domain_record.db")
+    d.instantiate_engine()
+    print(d.get_domain_id("python.org"))
+
+    print(d.get_last_record_search_time("python.org"))
+    print(f"timeout: {d.record_timeout('python.org')}")
+    a = d.read_data_from_domain_name("python.org")
+    print(d.read_dns_record(a))
 
 
 if __name__ == "__main__":
