@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy_utils import database_exists
+import sqlalchemy_utils
 
 from src.model import models
 from src.model.cache import RedisModel
@@ -52,7 +52,7 @@ class DNSRecordFetcher:
                 toolbox_search_result = dictionary_value_to_bytes(self.toolbox.domain_info)
                 dns_record = models.to_DNS_record(toolbox_search_result)
 
-                if not database_exists(url=self.database_url):
+                if not sqlalchemy_utils.database_exists(url=self.database_url):
                     self.database.create_database_and_tables()
 
                 # Add to database
