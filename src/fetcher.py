@@ -3,96 +3,78 @@ from typing import Optional
 from sqlalchemy_utils import database_exists
 
 from src.model import models
-from src.model.cache import RedisModel
-from src.model.database import DomainDatabase
-from src.model.models import DNSRecord
-from src.model.utils import dictionary_value_to_bytes, bytes_decrypt
-from src.utils.tools import DNSToolBox
+from src.model.utils import dictionary_value_to_bytes, bytes_decrypt, result_decrypt
+from . import toolbox, dns_database, dns_cache_pool, dns_database_url
 
 
-class DNSRecordFetcher:
+def get_records(domain_string: str) -> dict:
+    """
+    Function that integrates all toolbox, database and caching logic. Get record for the needing domain
 
-    def __init__(self, domain_string: str, database_url: str):
-        # setup toolbox
-        self.toolbox = DNSToolBox()
-        self.domain_string = self.toolbox.set_domain_string(domain_string)
+    :return: The cached search result
+    :rtype: Optional[DNSRecord]
+    """
+    toolbox.set_domain_string(domain_string=domain_string)
 
-        # setup database
-        self.database_url = database_url
-        self.database = DomainDatabase()
-        self.database.set_db_url(database_url)
-        self.database.instantiate_engine(echo=False)
+    cached_result = dns_cache_pool.get_value(key=domain_string)
+    if not cached_result:
+        # Check if it's in the database, if not in or timeout then search with DNSToolBox
+        if not dns_database.domain_name_exists(domain_name=domain_string) or \
+                dns_database.record_timeout(domain_name=domain_string):
 
-        # setup cache
-        self._cache_info = {"host": "localhost", "port": 6379, "db_number": 0, "seconds": 30}
-        self.cache_pool = RedisModel(
-            host=self._cache_info["host"],
-            port=self._cache_info["port"],
-            db_number=self._cache_info["db_number"],
-            seconds=self._cache_info["seconds"]
-        )
-        self.cache_pool.new_redis_client()
+            # Search with toolbox
+            domain = models.to_domain(domain_string)
+            toolbox_search_result = dictionary_value_to_bytes(toolbox.domain_info)
+            dns_record = models.to_DNS_record(toolbox_search_result)
 
-    def get_records(self) -> dict:
-        """
-        Function that integrates all toolbox, database and caching logic. Get record for the needing domain
+            if not database_exists(url=dns_database_url):
+                dns_database.create_database_and_tables()
 
-        :return: The cached search result
-        :rtype: Optional[DNSRecord]
-        """
+            # Add to database
+            dns_database.add_domain_data(domain_data=domain)
+            dns_database.add_domain_record_data(domain_record_data=dns_record)
 
-        cached_result = self.cache_pool.get_value(key=self.domain_string)
-        if not cached_result:
-            # Check if it's in the database, if not in or timeout then search with DNSToolBox
-            if not self.database.domain_name_exists(domain_name=self.domain_string) or \
-                    self.database.record_timeout(domain_name=self.domain_string):
+            # Cache data
+            dns_cache_pool.set_value(key=domain_string, value=toolbox_search_result)
 
-                # Search with toolbox
-                domain = models.to_domain(self.domain_string)
-                toolbox_search_result = dictionary_value_to_bytes(self.toolbox.domain_info)
-                dns_record = models.to_DNS_record(toolbox_search_result)
+            # Return Result
+            cached_result = dns_cache_pool.get_value(key=domain_string)
 
-                if not database_exists(url=self.database_url):
-                    self.database.create_database_and_tables()
-
-                # Add to database
-                self.database.add_domain_data(domain_data=domain)
-                self.database.add_domain_record_data(domain_record_data=dns_record)
-
-                # Cache data
-                self.cache_pool.set_value(key=self.domain_string, value=toolbox_search_result)
-
-                # Return Result
-                cached_result = self.cache_pool.get_value(key=self.domain_string)
-
-            else:
-                # Read from database
-                database_result = self.database.read_data_from_domain_name(domain_name=self.domain_string)
-
-                # Transfer database object to normal dictionary
-                result = self.database.read_dns_record(input_record=database_result)
-
-                # Cache data
-                self.cache_pool.set_value(key=self.domain_string, value=result)
-
-                # Return Result
-                cached_result = self.cache_pool.get_value(key=self.domain_string)
-
-        # Ultimately return the cached result
-        return cached_result
-
-    def get_record(self, record_type: str) -> any:
-        """
-        Get the specific record from the results with the given type
-        :param record_type: DNS record type
-
-        :return: The specific field value
-        :rtype: any
-        """
-        record_type = record_type.lower()
-        data = self.get_records()
-        if not data.get(record_type):
-            return None
         else:
-            record_value = bytes_decrypt(data[record_type])
-            return record_value
+            # Read from database
+            database_result = dns_database.read_data_from_domain_name(domain_name=domain_string)
+
+            # Transfer database object to normal dictionary
+            result = dns_database.read_dns_record(input_record=database_result)
+
+            # Cache data
+            dns_cache_pool.set_value(key=domain_string, value=result)
+
+            # Return Result
+            cached_result = dns_cache_pool.get_value(key=domain_string)
+
+    # Ultimately return the cached result
+    result_decrypt(cached_result)
+    return cached_result
+
+
+def get_record(domain_string: str, record_type: str) -> Optional[any]:
+    """
+    Get the specific record from the results with the given type
+
+    :param domain_string: Domain to check
+    :type:: str
+
+    :param record_type: DNS record type
+    :type: str
+
+    :return: The specific field value
+    :rtype: any
+    """
+    record_type = record_type.lower()
+    data = get_records(domain_string)
+    if not data.get(record_type):
+        return None
+    else:
+        record_value = bytes_decrypt(data[record_type])
+        return record_value
