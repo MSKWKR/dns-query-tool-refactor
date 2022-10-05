@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import sqlalchemy.exc
-from sqlalchemy import engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import SQLModel, create_engine, Session, select
 
@@ -22,16 +21,13 @@ class DomainDatabase:
     def set_db_url(self, url: str):
         self._db_url = url
 
-    def instantiate_engine(self, echo: bool = True) -> Optional[engine.Engine]:
+    def instantiate_engine(self, echo: bool = True):
         """
         Function that instantiates the sqlalchemy database engine.
 
         :param echo: The configuring logging parameter. if True, the connection pool will log informational output such as when connections are invalidated as well as when connections are recycled to the default log handler,
                      which defaults to sys.stdout for output. If set to the string "debug", the logging will include pool checkouts and checkins.
         :type: bool
-
-        :return: The created engine if successful, else None
-        :rtype: sqlalchemy.engine.Engine or None
         """
         new_engine = None
         try:
@@ -40,7 +36,6 @@ class DomainDatabase:
             print(f"{error=}")
 
         self.db_engine = new_engine
-        return self.db_engine
 
     def create_database_and_tables(self) -> None:
         """

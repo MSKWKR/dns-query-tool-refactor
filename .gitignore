@@ -4,4 +4,4 @@ venv
 __pycache__/
 src/utils/apikeys.ini
 .$DNS_tool_flow.drawio.bkp
-domain_record.db
+src/domain_record.db

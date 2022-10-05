@@ -16,6 +16,9 @@ def get_records(domain_string: str) -> dict:
     """
     toolbox.set_domain_string(domain_string=domain_string)
 
+    if not database_exists(url=dns_database_url):
+        dns_database.create_database_and_tables()
+
     cached_result = dns_cache_pool.get_value(key=domain_string)
     if not cached_result:
         # Check if it's in the database, if not in or timeout then search with DNSToolBox
@@ -26,9 +29,6 @@ def get_records(domain_string: str) -> dict:
             domain = models.to_domain(domain_string)
             toolbox_search_result = dictionary_value_to_bytes(toolbox.domain_info)
             dns_record = models.to_DNS_record(toolbox_search_result)
-
-            if not database_exists(url=dns_database_url):
-                dns_database.create_database_and_tables()
 
             # Add to database
             dns_database.add_domain_data(domain_data=domain)
