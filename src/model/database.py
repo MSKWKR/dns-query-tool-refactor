@@ -173,6 +173,23 @@ class DomainDatabase:
 
         return last_check
 
+    def record_pass_time(self, domain_name: str) -> int:
+        """
+        Return time passed since last searching the domain
+
+        :param domain_name: Domain string
+        :type: str
+
+        :return: Seconds pass
+        :rtype: int
+        """
+        now = datetime.now()  # pytz.timezone("Asia/Taipei"))
+        last_record_search_time = datetime.strptime(self.get_last_record_search_time(domain_name=domain_name),
+                                                    "%Y-%m-%d %H:%M:%S")
+
+        pass_time = (now - last_record_search_time).seconds
+        return pass_time
+
     def record_timeout(self, domain_name: str) -> bool:
         """
         Check if record within database isn't up-to-date
@@ -183,11 +200,7 @@ class DomainDatabase:
         :return: True if data isn't up-to-date, else False
         :rtype: bool
         """
-        now = datetime.now()  # pytz.timezone("Asia/Taipei"))
-        last_record_search_time = datetime.strptime(self.get_last_record_search_time(domain_name=domain_name),
-                                                    "%Y-%m-%d %H:%M:%S")
-
-        pass_time = (now - last_record_search_time).seconds
+        pass_time = self.record_pass_time(domain_name=domain_name)
         expire_time = timedelta(minutes=5).seconds
 
         # time to live
@@ -236,18 +249,21 @@ class DomainDatabase:
             }
             return result
 
+    def clean_outdated_records(self) -> None:
+        """
+        Function that deletes outdated records, should run when connected to database.
 
-def _main():
-    d = DomainDatabase()
-    d.set_db_url(f"sqlite:///../../domain_record.db")
-    d.instantiate_engine()
-    print(d.get_domain_id("python.org"))
+        :return:
+        :rtype: None
+        """
+        # Timeout -> 10 minutes
+        now = datetime.now()
+        with Session(self.db_engine) as session:
+            statement = select(DNSRecord)
+            results = session.exec(statement)
 
-    print(d.get_last_record_search_time("python.org"))
-    print(f"timeout: {d.record_timeout('python.org')}")
-    a = d.read_data_from_domain_name("python.org")
-    print(d.read_dns_record(a))
-
-
-if __name__ == "__main__":
-    _main()
+            for record in results:
+                last_search_time = datetime.strptime(record.check_time, "%Y-%m-%d %H:%M:%S")
+                if (now - last_search_time).seconds > 600:
+                    session.delete(record)
+                    session.commit()
