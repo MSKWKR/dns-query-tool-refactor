@@ -2,6 +2,6 @@
 /DS_Store
 venv
 __pycache__/
-apikeys.ini
+src/utils/apikeys.ini
 .$DNS_tool_flow.drawio.bkp
 domain_record.db
