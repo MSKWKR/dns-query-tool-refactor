@@ -117,6 +117,27 @@ class DomainDatabase:
 
             return True if result else False
 
+    def domain_record_exists(self, domain_name: str) -> bool:
+        """
+        Util checking whether the record exists within table dnsrecord
+        :param domain_name: Domain string
+        :type: str
+
+        :return: True if exists else False
+        :rtype: bool
+        """
+
+        with Session(self.db_engine) as session:
+            statement = select(DNSRecord).where(DNSRecord.domain_name == domain_name)
+            # Since there should be only one specific domain name in domain table, we fetch one
+            result = None
+            try:
+                result = session.exec(statement).all()[-1]
+            except sqlalchemy.exc.NoResultFound:
+                print(f"Record data with domain name: {domain_name} doesn't exist")
+
+            return True if result else False
+
     def read_data_from_domain_name(self, domain_name: str) -> Optional[DNSRecord]:
         """
         Function to read the latest data with the given input domain
@@ -264,6 +285,6 @@ class DomainDatabase:
 
             for record in results:
                 last_search_time = datetime.strptime(record.check_time, "%Y-%m-%d %H:%M:%S")
-                if (now - last_search_time).seconds > 600:
+                if (now - last_search_time).seconds > 6000:
                     session.delete(record)
                     session.commit()
