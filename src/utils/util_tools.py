@@ -1,7 +1,10 @@
 import ipaddress
 from typing import List
 
+from src.utils.log.log import exception, LOGGER
 
+
+@exception(LOGGER)
 def get_ipv4_range(start_ip: str, end_ip: str) -> List[str]:
     """
     Util function for getting all IPv4 addresses within the given range
@@ -25,6 +28,7 @@ def get_ipv4_range(start_ip: str, end_ip: str) -> List[str]:
             ipv4_range_list.append(str(ipaddress.IPv4Address(ip_int)))
 
     except ipaddress.AddressValueError as error:
-        print(f"{error=}")
+        LOGGER.exception(msg=f"ipaddress AddressValueError: {error}")
+        # print(f"{error=}")
 
     return ipv4_range_list

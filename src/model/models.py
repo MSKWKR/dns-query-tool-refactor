@@ -2,8 +2,7 @@ from typing import Optional
 
 from sqlmodel import Field, SQLModel
 
-from src import LOGGER
-from src.utils.log.log import exception
+from src.utils.log.log import exception, LOGGER
 from src.utils.tools import DNSToolBox
 
 

@@ -18,6 +18,7 @@ import whois
 from ipwhois.asn import IPASN
 from ipwhois.net import Net
 
+from src.utils.log.log import exception, LOGGER
 from .blacklist_checker import BlackListChecker
 from .constants import EMAIL_TABLE, SRV_LIST
 from .valid_result import Validator
@@ -49,8 +50,8 @@ class DNSToolBox:
         return f"DNSToolBox{self._domain_string}"
 
     # ------------------------- Helper Function ------------------------------------
-
     @classmethod
+    @exception(LOGGER)
     def strip_last_dot(cls, addr: str) -> str:
         """
         Util function that strips the last dot from an address (if any)
@@ -64,6 +65,7 @@ class DNSToolBox:
         return addr[:-1] if addr.endswith('.') else addr
 
     @classmethod
+    @exception(LOGGER)
     def parse_raw_domain(cls, input_domain: str) -> Optional[str]:
         """
         Method parse_raw_domain cleanses the input domain and return the domain name
@@ -81,10 +83,12 @@ class DNSToolBox:
             # fixing protocol means the protocol we use now is http and https, ftp will fail
             input_domain = tld.get_fld(input_domain, fix_protocol=True)
         except (tld.exceptions.TldBadUrl, tld.exceptions.TldDomainNotFound) as error:
-            print(f"{error=}")
+            # print(f"{error=}")
+            LOGGER.exception(msg=f"Domain Parse Error: {error}")
             input_domain = None
         return input_domain
 
+    @exception(LOGGER)
     def set_domain_string(self, domain_string: str) -> str:
         """
         Set_domain_string parses, initialize and return the pure domain string
@@ -97,11 +101,11 @@ class DNSToolBox:
         """
 
         self._domain_string = DNSToolBox.parse_raw_domain(domain_string)
-        # self._validator = Validator(self._domain_string)
 
         return self._domain_string
 
     # ------------------------- Search Tools ------------------------------------
+    @exception(LOGGER)
     def search(self, record_type: str) -> Optional[dns.resolver.Resolver]:
         """
         The method search with the record type is a generic function
@@ -117,9 +121,11 @@ class DNSToolBox:
             return self._res.resolve(self._domain_string, record_type)
         # Return None when input domain is incorrect
         except ToolBoxErrors as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"DNS Record Error: {error}")
+            # print(f"{error=}")
             return None
 
+    @exception(LOGGER)
     def search_www(self) -> Optional[dns.resolver.Resolver]:
         """
         Search_www check www domain by checking it's A Record.
@@ -135,10 +141,11 @@ class DNSToolBox:
                 return answers
 
         except ToolBoxErrors as error:
-            print(f"{error=}")
-
+            LOGGER.exception(msg=f"DNS Record Error: {error}")
+            # print(f"{error=}")
         return None
 
+    @exception(LOGGER)
     def search_whois(self) -> any:
         """
         Query a WHOIS server directly and return the parsed whois data.
@@ -151,10 +158,12 @@ class DNSToolBox:
             return whois_result
         # Handle TypeError by returning None
         except ToolBoxErrors as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"DNS Record Error: {error}")
+            # print(f"{error=}")
             return None
 
     @classmethod
+    @exception(LOGGER)
     def search_ipwhois_asn(cls, ip_address: str) -> dict[any:any]:
         """
         Util function that searches the ASN records with the given IP
@@ -178,9 +187,11 @@ class DNSToolBox:
 
         # Catches ValueError when ip isn't correct
         except ToolBoxErrors as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"DNS Record Error: {error}")
+            # print(f"{error=}")
             return asn_results
 
+    @exception(LOGGER)
     def search_o365(self, record_type: str) -> Optional[dns.resolver.Resolver]:
         """
         The method search_o365 with record type is a generic function
@@ -220,12 +231,13 @@ class DNSToolBox:
                     raise NameError(f"o365 Record Type Input Error: {record_type}")
 
         except ToolBoxErrors as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"DNS Record Error: {error}")
+            # print(f"{error=}")
 
         return answers
 
     # ------------------------- Get Result Tools ------------------------------------
-
+    @exception(LOGGER)
     def get_srv_results(self, proto="tcp") -> List[str]:
         """
             Util function for searching srv records for with the given protocol name, default to tcp.
@@ -246,10 +258,13 @@ class DNSToolBox:
                         srv_result_list.append(srv_result)
 
             except ToolBoxErrors as error:
+                # Not logging it since parsing the srv list is too much
+                # LOGGER.exception(msg=f"SRV Record Error: {error}")
                 # print(f"{error=}")
                 pass
         return srv_result_list
 
+    @exception(LOGGER)
     def get_result(self, record_type: str) -> str | List[str]:
         """
         Function for getting the asked Record Type.
@@ -276,7 +291,8 @@ class DNSToolBox:
                         result = str(answer)
                         if not self._validator.is_valid(self._domain_string, record_type, result):
                             # return an empty result if the given answer is incorrect
-                            print(f"Incorrect result: {result}")
+                            LOGGER.exception(msg=f"DNS Record Invalid: {result}")
+                            # print(f"Incorrect result: {result}")
                             return ""
                         return result
                 else:
@@ -310,10 +326,13 @@ class DNSToolBox:
                         for a_data in a:
                             # check whether ip is valid first
                             a_result = str(a_data)
-                            if self._validator.is_valid(self._domain_string, a_request_type, a_result):
-                                ip_list.append(a_result)
+                            if not self._validator.is_valid(self._domain_string, a_request_type, a_result):
+                                LOGGER.exception(msg=f"DNS Record Invalid: {a_result}")
+                            ip_list.append(a_result)
+
                     except ToolBoxErrors as error:
-                        print(f"{error=}")
+                        LOGGER.exception(msg=f"DNS Record Error: {error}")
+                        # print(f"{error=}")
                 return ip_list
 
             case "WWW":
@@ -323,6 +342,7 @@ class DNSToolBox:
             case _:
                 raise NameError(f"Record Type Input Error: {record_type}")
 
+    @exception(LOGGER)
     def get_o365_result(self, record_type: str) -> str:
         """
         Util for checking if the o365 record type exists.
@@ -364,6 +384,7 @@ class DNSToolBox:
         return ""
 
     # ---------------------------------------------- ToolBox Features -----------------------------------------
+    @exception(LOGGER)
     def o365_results(self) -> dict[str: List[str]]:
         o365_types = ["auto", "msoid", "lync", "365mx", "spf", "sipdir", "sipfed"]
         o365_results_dict = {
@@ -389,6 +410,7 @@ class DNSToolBox:
 
     # Since the tool wants the specific field for the ASN,
     # this is dirty code that I didn't change much
+    @exception(LOGGER)
     def asn(self) -> dict[str:List[str]]:
         """
         Function for reading the ASN result parsed from search_ipwhois_asn(),
@@ -426,6 +448,7 @@ class DNSToolBox:
 
         return asn_dict
 
+    @exception(LOGGER)
     def srv(self) -> dict[str: List[str]]:
         """
         Util for getting the srv record for the searched domain
@@ -447,6 +470,7 @@ class DNSToolBox:
 
         return srv_result_dict
 
+    @exception(LOGGER)
     def xfr(self) -> List[str]:
         xfr_list = []
         try:
@@ -457,10 +481,12 @@ class DNSToolBox:
                 for n in sorted(zone.nodes.keys()):
                     xfr_list.append(zone[n].to_text(n))
         except ToolBoxErrors as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"DNS XFR Record Error: {error}")
+            # print(f"{error=}")
 
         return xfr_list
 
+    @exception(LOGGER)
     def ptr(self) -> str:
         """
         Util function for getting the ptr record using reverse query
@@ -471,12 +497,14 @@ class DNSToolBox:
             address = dns.reversename.from_address(self.get_result("a"))
             return str(dns.resolver.resolve(str(address), "PTR")[0])
         except ToolBoxErrors as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"DNS PTR Record Error: {error}")
+            # print(f"{error=}")
             return ""
 
     # --------------------- whois details ----------------------
     # ["expiration_date", "registrar"]
     # not testing the following code since it's merely getting fields from the whois result
+    @exception(LOGGER)
     def expiration_date(self) -> str:
         """
         Util for getting the expiration date for the searched domain
@@ -489,6 +517,7 @@ class DNSToolBox:
             return str(whois_result["expiration_date"])
         return ""
 
+    @exception(LOGGER)
     def registrar(self) -> str:
         """
         Util for getting the registrar for the searched domain
@@ -502,6 +531,7 @@ class DNSToolBox:
         return ""
 
     # ---------------------- Email Provider ------------------------
+    @exception(LOGGER)
     def email_provider(self) -> str:
         mx_record = self.get_result("mx")
         if len(mx_record) != 0:
@@ -514,6 +544,7 @@ class DNSToolBox:
 
     # ------------------------------------------- Comparison --------------------------------------------------
     # check 'oldfunshinymelody.neverssl.com' for None SSL
+    @exception(LOGGER)
     def has_https(self) -> bool:
         """
         Util for checking whether the domain has https
@@ -532,16 +563,19 @@ class DNSToolBox:
             return True if connection.getresponse() else False
 
         except http.client.HTTPException as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"HTTP client server Error: {error}")
+            # print(f"{error=}")
             return False
 
         except BaseException as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"HTTP search Error: {error}")
+            # print(f"{error=}")
             return False
 
         finally:  # always close the connection
             connection.close()
 
+    @exception(LOGGER)
     def is_black_listed(self) -> bool:
         """
         Util for checking whether the domain is blacklisted by any providers
@@ -615,20 +649,3 @@ class DNSToolBox:
         domain_search_result["search_used_time"] = search_used_time
 
         return domain_search_result
-
-
-def _main():
-    toolbox = DNSToolBox()
-    continue_ = True
-    while continue_:
-        test_site = input("Enter Domain Name: ")
-        toolbox.set_domain_string(test_site)
-        search_result = toolbox.domain_info
-        pprint(search_result)
-
-        if input("Do you want to continue? (y/n)").lower() == "n":
-            continue_ = False
-
-
-if __name__ == "__main__":
-    _main()

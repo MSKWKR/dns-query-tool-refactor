@@ -1,11 +1,11 @@
 import base64
 import configparser
 import json
-from pprint import pprint
-from typing import Union
 
 import pydnsbl
 import requests
+
+from src.utils.log.log import exception, LOGGER
 
 
 class BlackListChecker:
@@ -21,6 +21,7 @@ class BlackListChecker:
         self.config.read('apikeys.ini')
 
     # Python Domain Name System Blacklists
+    @exception(LOGGER)
     def search_dnsbl(self, url: str) -> any:
         """
         Util checking pydnsbl
@@ -34,6 +35,7 @@ class BlackListChecker:
         dnsbl_result = self._domain_checker.check(url)
         return dnsbl_result
 
+    @exception(LOGGER)
     def search_virus_total(self, url: str) -> json:
         """
         Util to get a URL analysis report from virustotal
@@ -60,6 +62,7 @@ class BlackListChecker:
 
         return response.json()
 
+    @exception(LOGGER)
     def is_black_listed_pydnsbl(self, url: str) -> bool:
         """
         Checks the result of search_dnsbl()
@@ -74,8 +77,8 @@ class BlackListChecker:
         return pydnsbl_result.blacklisted
 
     # ---------------------------- Virus Total Result -------------------------------------
-
-    def site_status_virus_total(self, url) -> Union[dict, dict]:
+    @exception(LOGGER)
+    def site_status_virus_total(self, url) -> any:
         """
         Util function checking Virus Total in order to get whether the given is black listed,
         returns two dictionaries, the first being all provider status and the second being the blacklisted provider
@@ -84,7 +87,7 @@ class BlackListChecker:
         :type: str
 
         :return: The result after checking with Virus Total
-        :rtype: Union[dict, dict]
+        :rtype: tuple(dict, dict)
         """
         site_statuses = {}
         black_listed_provider = {}
@@ -99,10 +102,12 @@ class BlackListChecker:
                 if site_status not in ("clean", "unrated"):
                     black_listed_provider[provider] = site_status
         except KeyError as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"Virus total key error: {error}")
+            # print(f"{error=}")
 
         return site_statuses, black_listed_provider
 
+    @exception(LOGGER)
     def is_black_listed_virus_total(self, url) -> bool:
         """
         Util function checking Virus Total in order to get whether the given is black listed
@@ -113,7 +118,7 @@ class BlackListChecker:
         :rtype: bool
         """
         black_listed_provider = self.site_status_virus_total(url)[1]
-        print(black_listed_provider)
+        # print(black_listed_provider)
         return len(black_listed_provider) != 0
 
     def is_black_listed(self, url: str) -> bool:
@@ -126,13 +131,3 @@ class BlackListChecker:
         :rtype: bool
         """
         return self.is_black_listed_virus_total(url) or self.is_black_listed_pydnsbl(url)
-
-
-def _main():
-    checker = BlackListChecker()
-    pprint(checker.site_status_virus_total("subtitleseeker.com"))
-    print(checker.is_black_listed("subtitleseeker.com"))
-
-
-if __name__ == "__main__":
-    _main()
