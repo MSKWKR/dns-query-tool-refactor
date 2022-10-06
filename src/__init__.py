@@ -1,9 +1,16 @@
+import logging
+from datetime import datetime
+
 from src.model import models
 from src.model.cache import RedisModel
 from src.model.database import DomainDatabase
 from src.model.models import DNSRecord
 from src.model.utils import dictionary_value_to_bytes, bytes_decrypt
+from src.utils.log.log import LOGGER
 from src.utils.tools import DNSToolBox
+
+LOGGER.log(level=logging.INFO,
+           msg=f"---------------- DNS Search {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ----------------\n\n")
 
 # Database Information
 sqlite_file_name = "domain_record.db"
@@ -11,6 +18,7 @@ dns_database_url = f"sqlite:///src/{sqlite_file_name}"
 
 # Cacher Server Information
 dns_cache_server_info = {
+    # Connect to Azure Redis Cache
     "host": "dnstool.redis.cache.windows.net",
     "port": 6379,
     "db_number": 0,
