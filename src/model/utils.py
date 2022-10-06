@@ -1,6 +1,9 @@
 import pickle
 
+from src.utils.log.log import exception, LOGGER
 
+
+@exception(LOGGER)
 def dictionary_value_to_bytes(search_result: dict) -> dict:
     """
     Helper function for taking the searched result and pickle all field values except for search_used_time and check_time
@@ -19,6 +22,7 @@ def dictionary_value_to_bytes(search_result: dict) -> dict:
     return search_result
 
 
+@exception(LOGGER)
 def bytes_decrypt(bytes_form_data: bytes) -> any:
     """
     Helper function to decrypt the given data
@@ -32,6 +36,7 @@ def bytes_decrypt(bytes_form_data: bytes) -> any:
     return pickle.loads(bytes_form_data)
 
 
+@exception(LOGGER)
 def result_decrypt(encrypted_result: dict) -> None:
     """
     Helper function to decrypt all the bytes value within a dictionary

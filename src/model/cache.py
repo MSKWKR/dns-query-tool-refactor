@@ -5,6 +5,8 @@ from typing import Optional
 import redis
 from redis.exceptions import ConnectionError
 
+from src.utils.log.log import LOGGER, exception
+
 
 class RedisModel:
     """
@@ -19,6 +21,7 @@ class RedisModel:
         self._password = password
         self.data_expiration_time = timedelta(seconds=seconds)
 
+    @exception(LOGGER)
     def new_redis_client(self):
         """
         Util function for redis client instantiation, returns None if connection failed.
@@ -36,16 +39,16 @@ class RedisModel:
                 # ssl_cert_reqs='required',
                 # ssl_ca_certs=""
             )
-            print(client)
-            print(client.ping())
             ping = client.ping()
             if ping:
                 self.client = client
 
 
         except (redis.AuthenticationError, ConnectionError) as error:
-            print(f"Redis server connection error: {error}")
+            LOGGER.exception(msg=f"Redis server connection error: {error}")
+            # print(f"Redis server connection error: {error}")
 
+    @exception(LOGGER)
     def set_value(self, key: str, value: any) -> bool:
         """
         Setting a key-value pair within the cache pool. Will pickle the input value first.
@@ -70,12 +73,14 @@ class RedisModel:
                 ex=self.data_expiration_time,
                 value=value,
             )
-            print("Added to Cache")
+            # print("Added to Cache")
         except redis.exceptions.DataError as error:
-            print(f"Redis Error: {error}")
+            LOGGER.exception(msg=f"Redis Error: {error}")
+            # print(f"Redis Error: {error}")
 
         return state
 
+    @exception(LOGGER)
     def get_value(self, key: str) -> Optional[any]:
         """
         Takes the given key and return the unpickled object, None if value doesn't exist.
@@ -91,19 +96,3 @@ class RedisModel:
             value = pickle.loads(value)
 
         return value
-
-
-def _main():
-    r = RedisModel(
-        host="dnstool.redis.cache.windows.net",
-        port=6379,
-        password="CU6WkddvYT62X6rvuPZmJftgQFENodV4kAzCaPUCHoM=",
-        db_number=0,
-        seconds=30
-    )
-
-    r.new_redis_client()
-
-
-if __name__ == "__main__":
-    _main()

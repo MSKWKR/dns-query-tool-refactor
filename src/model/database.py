@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import SQLModel, create_engine, Session, select
 
 from src.model.models import DNSRecord, Domain
+from src.utils.log.log import exception, LOGGER
 
 
 class DomainDatabase:
@@ -18,9 +19,11 @@ class DomainDatabase:
         self._db_url = None
 
     # ------------------------------------------- database creation -------------------------------------------------------
+    @exception(LOGGER)
     def set_db_url(self, url: str):
         self._db_url = url
 
+    @exception(LOGGER)
     def instantiate_engine(self, echo: bool = True):
         """
         Function that instantiates the sqlalchemy database engine.
@@ -33,10 +36,11 @@ class DomainDatabase:
         try:
             new_engine = create_engine(self._db_url, echo=echo)
         except SQLAlchemyError as error:
-            print(f"{error=}")
-
+            LOGGER.exception(msg=f"Database Error: {error}")
+            # print(f"{error=}")
         self.db_engine = new_engine
 
+    @exception(LOGGER)
     def create_database_and_tables(self) -> None:
         """
         Function to create a database and create all the tables that were automatically registered in SQLModel.metadata
@@ -49,6 +53,7 @@ class DomainDatabase:
         SQLModel.metadata.create_all(self.db_engine)
 
     # ------------------------------------------- database operation -------------------------------------------------------
+    @exception(LOGGER)
     def add_domain_data(self, domain_data: Domain) -> None:
         """
         Add the given domain data to the database.
@@ -71,9 +76,11 @@ class DomainDatabase:
                 print("Domain Name Exists.")
 
         except SQLAlchemyError as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"Database Error: {error}")
+            # print(f"{error=}")
             return
 
+    @exception(LOGGER)
     def add_domain_record_data(self, domain_record_data: DNSRecord) -> None:
         """
         Add the given domain data to the database.
@@ -86,16 +93,16 @@ class DomainDatabase:
         """
         domain_record_data.domain_id = self.get_domain_id(domain_record_data.domain_name)
         try:
-            print("Adding to database.\n")
             with Session(self.db_engine) as session:
                 session.add(domain_record_data)
                 session.commit()
-                print("Added to database.\n")
 
         except SQLAlchemyError as error:
-            print(f"{error=}")
+            LOGGER.exception(msg=f"Database Error: {error}")
+            # print(f"{error=}")
             return
 
+    @exception(LOGGER)
     def domain_name_exists(self, domain_name: str) -> bool:
         """
         Util checking whether the domain name exists within table Domain
@@ -113,10 +120,12 @@ class DomainDatabase:
             try:
                 result = session.exec(statement).one()
             except sqlalchemy.exc.NoResultFound:
-                print(f"Record data with domain name: {domain_name} doesn't exist")
+                LOGGER.exception(msg=f"Record data with domain name: {domain_name} doesn't exist")
+                # print(f"Record data with domain name: {domain_name} doesn't exist")
 
             return True if result else False
 
+    @exception(LOGGER)
     def domain_record_exists(self, domain_name: str) -> bool:
         """
         Util checking whether the record exists within table dnsrecord
@@ -135,10 +144,12 @@ class DomainDatabase:
                 result = session.exec(statement).all()
 
             except sqlalchemy.exc.NoResultFound:
-                print(f"Record data with domain name: {domain_name} doesn't exist")
+                # print(f"Record data with domain name: {domain_name} doesn't exist")
+                LOGGER.exception(msg=f"Record data with domain name: {domain_name} doesn't exist")
 
             return True if result else False
 
+    @exception(LOGGER)
     def read_data_from_domain_name(self, domain_name: str) -> Optional[DNSRecord]:
         """
         Function to read the latest data with the given input domain
@@ -155,9 +166,11 @@ class DomainDatabase:
                 result = session.exec(statement).all()
                 return result[-1]
         except SQLAlchemyError as error:
-            print(f"Data reading error: {error}")
+            LOGGER.exception(msg=f"Data reading error: {error}")
+            # print(f"Data reading error: {error}")
             return
 
+    @exception(LOGGER)
     def get_domain_id(self, domain_name: str) -> int:
         """
         Helper function for checking domain id from the Domain table
@@ -173,6 +186,7 @@ class DomainDatabase:
             result = session.exec(statement).one()
             return result.id
 
+    @exception(LOGGER)
     def get_last_record_search_time(self, domain_name: str) -> Optional[str]:
         """
         Helper function to fetch the last search time for the latest record within database
@@ -191,10 +205,12 @@ class DomainDatabase:
                 last_check = last_result.check_time
 
         except sqlalchemy.exc.NoResultFound:
-            print(f"Record data with domain name: {domain_name} doesn't exist")
+            # print(f"Record data with domain name: {domain_name} doesn't exist")
+            LOGGER.exception(msg=f"Record data with domain name: {domain_name} doesn't exist")
 
         return last_check
 
+    @exception(LOGGER)
     def record_pass_time(self, domain_name: str) -> int:
         """
         Return time passed since last searching the domain
@@ -212,6 +228,7 @@ class DomainDatabase:
         pass_time = (now - last_record_search_time).seconds
         return pass_time
 
+    @exception(LOGGER)
     def record_timeout(self, domain_name: str) -> bool:
         """
         Check if record within database isn't up-to-date
@@ -227,14 +244,13 @@ class DomainDatabase:
 
         # time to live
         ttl = expire_time - pass_time
-        print(f"{ttl=}")
 
         # Possible bug here, might use within different timezone
         if ttl <= 0:
             return True
-
         return False
 
+    @exception(LOGGER)
     def read_dns_record(self, input_record: DNSRecord) -> dict:
         """
         Function to read from the fetched database value
@@ -271,6 +287,7 @@ class DomainDatabase:
             }
             return result
 
+    @exception(LOGGER)
     def clean_outdated_records(self) -> None:
         """
         Function that deletes outdated records, should run when connected to database.

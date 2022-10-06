@@ -2,6 +2,8 @@ from typing import Optional
 
 from sqlmodel import Field, SQLModel
 
+from src import LOGGER
+from src.utils.log.log import exception
 from src.utils.tools import DNSToolBox
 
 
@@ -44,6 +46,7 @@ class DNSRecord(SQLModel, table=True):
     domain_id: Optional[int] = Field(default=None, foreign_key="domain.id")
 
 
+@exception(LOGGER)
 def to_domain(domain: str) -> Optional[Domain]:
     """
     The helper function for turning the domain string into a Domain class
@@ -61,10 +64,12 @@ def to_domain(domain: str) -> Optional[Domain]:
         record = Domain(domain_string=domain)
         return record
     except BaseException as error:
-        print(f"{error=}")
+        LOGGER.exception(msg=f"Domain string transform error: {error}")
+        # print(f"{error=}")
         return
 
 
+@exception(LOGGER)
 def to_DNS_record(domain_search_result: dict) -> Optional[DNSRecord]:
     """
     The helper function for turning the domain string into a Domain class
@@ -106,5 +111,6 @@ def to_DNS_record(domain_search_result: dict) -> Optional[DNSRecord]:
 
         return record
     except BaseException as error:
-        print(f"{error=}")
+        LOGGER.exception(msg=f"Domain Record transform error: {error}")
+        # print(f"{error=}")
         return
