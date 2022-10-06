@@ -5,7 +5,7 @@ from src.fetcher import get_records, get_record
 
 @click.command()
 @click.argument('domain')
-@click.option('-t', '--rtype', type=str)
+@click.option('-t', '--rtype', type=str, help='DNS record type to search')
 def app(domain, rtype: str):
     if rtype:
         # if type provided, return only the specific type
