@@ -11,10 +11,11 @@ dns_database_url = f"sqlite:///src/{sqlite_file_name}"
 
 # Cacher Server Information
 dns_cache_server_info = {
-    "host": "localhost",
+    "host": "dnstool.redis.cache.windows.net",
     "port": 6379,
     "db_number": 0,
-    "seconds": 30
+    "seconds": 30,
+    "password": "CU6WkddvYT62X6rvuPZmJftgQFENodV4kAzCaPUCHoM="
 }
 
 # Setup Database
@@ -29,7 +30,8 @@ dns_cache_pool = RedisModel(
     host=dns_cache_server_info["host"],
     port=dns_cache_server_info["port"],
     db_number=dns_cache_server_info["db_number"],
-    seconds=dns_cache_server_info["seconds"]
+    seconds=dns_cache_server_info["seconds"],
+    password=dns_cache_server_info["password"]
 )
 dns_cache_pool.new_redis_client()
 

@@ -132,7 +132,8 @@ class DomainDatabase:
             # Since there should be only one specific domain name in domain table, we fetch one
             result = None
             try:
-                result = session.exec(statement).all()[-1]
+                result = session.exec(statement).all()
+
             except sqlalchemy.exc.NoResultFound:
                 print(f"Record data with domain name: {domain_name} doesn't exist")
 
