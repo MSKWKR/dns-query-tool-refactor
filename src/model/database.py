@@ -71,9 +71,10 @@ class DomainDatabase:
                 with Session(self.db_engine) as session:
                     session.add(domain_data)
                     session.commit()
-                    print("Added to database.\n")
+                    # print("Added to database.\n")
             else:
-                print("Domain Name Exists.")
+                # print("Domain Name Exists.")
+                pass
 
         except SQLAlchemyError as error:
             LOGGER.exception(msg=f"Database Error: {error}")
