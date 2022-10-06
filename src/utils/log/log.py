@@ -3,6 +3,12 @@ from functools import wraps
 
 
 def create_logger() -> logging.Logger:
+    """
+    Util that creates a logger object
+
+    :return: A logging.Logger object
+    :rtype: logging.Logger
+    """
     # create a logger object
     new_logger = logging.getLogger('execution_log')
     new_logger.setLevel(logging.INFO)
@@ -20,9 +26,15 @@ def create_logger() -> logging.Logger:
 
 
 def exception(py_logger: logging.Logger):
-    # logger is the logging object
-    # exception is the decorator objects
-    # that logs every exception into log file
+    """
+    Decorator used to catch unexpected exceptions
+    :param py_logger: A logging.Logger object
+    :type: logging.Logger
+
+    :return:
+    :rtype: None
+    """
+
     def decorator(func):
 
         @wraps(func)
