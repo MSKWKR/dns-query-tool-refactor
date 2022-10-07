@@ -6,3 +6,4 @@ src/utils/apikeys.ini
 .$DNS_tool_flow.drawio.bkp
 src/domain_record.db
 execution_log.log
+*.json

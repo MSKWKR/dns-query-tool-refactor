@@ -94,5 +94,5 @@ def get_record_to_json(domain_string: str, file_name: str):
     """
     result = get_records(domain_string=domain_string)
 
-    with open(f"{file_name}.json", "w", encoding="utf-8") as file:
+    with open(f"../{file_name}.json", "w", encoding="utf-8") as file:
         json.dump(result, file)
