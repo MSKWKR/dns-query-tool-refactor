@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from sqlalchemy_utils import database_exists
@@ -78,3 +79,20 @@ def get_record(domain_string: str, record_type: str) -> Optional[any]:
     else:
         record_value = data[record_type]
         return record_value
+
+
+def get_record_to_json(domain_string: str, file_name: str):
+    """
+    Function to dump all the fetched result to a json file
+
+
+    :param domain_string: Domain to check
+
+    :param file_name: The file name
+
+    :return:
+    """
+    result = get_records(domain_string=domain_string)
+
+    with open(f"{file_name}.json", "w", encoding="utf-8") as file:
+        json.dump(result, file)
