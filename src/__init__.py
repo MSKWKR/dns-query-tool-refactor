@@ -14,7 +14,7 @@ LOGGER.log(level=logging.INFO,
 
 # Database Information
 sqlite_file_name = "domain_record.db"
-dns_database_url = f"sqlite:///src/{sqlite_file_name}"
+dns_database_url = f"sqlite:///../{sqlite_file_name}"
 
 # Cacher Server Information
 dns_cache_server_info = {
@@ -22,7 +22,7 @@ dns_cache_server_info = {
     "host": "dnstool.redis.cache.windows.net",
     "port": 6379,
     "db_number": 0,
-    "seconds": 30,
+    "seconds": 600,
     "password": "CU6WkddvYT62X6rvuPZmJftgQFENodV4kAzCaPUCHoM="
 }
 

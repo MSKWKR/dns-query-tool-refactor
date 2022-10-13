@@ -67,7 +67,7 @@ class DomainDatabase:
 
         try:
             if not self.domain_name_exists(domain_data.domain_string):
-                print("Adding to database.\n")
+                # print("Adding to database.\n")
                 with Session(self.db_engine) as session:
                     session.add(domain_data)
                     session.commit()
@@ -241,7 +241,7 @@ class DomainDatabase:
         :rtype: bool
         """
         pass_time = self.record_pass_time(domain_name=domain_name)
-        expire_time = timedelta(minutes=5).seconds
+        expire_time = timedelta(minutes=10).seconds
 
         # time to live
         ttl = expire_time - pass_time
@@ -296,7 +296,7 @@ class DomainDatabase:
         :return:
         :rtype: None
         """
-        # Timeout -> 10 minutes
+        # Timeout -> 1000 minutes
         now = datetime.now()
         with Session(self.db_engine) as session:
             statement = select(DNSRecord)
@@ -304,6 +304,6 @@ class DomainDatabase:
 
             for record in results:
                 last_search_time = datetime.strptime(record.check_time, "%Y-%m-%d %H:%M:%S")
-                if (now - last_search_time).seconds > 6000:
+                if (now - last_search_time).seconds > 60000:
                     session.delete(record)
                     session.commit()

@@ -56,7 +56,13 @@ def get_records(domain_string: str) -> dict:
 
     # Ultimately return the cached result
     result_decrypt(cached_result)
+    # cached_result = json.dumps(cached_result)
+    # print(type(cached_result))
     return cached_result
+
+
+def get_human_readable_records(domain_string: str) -> dict:
+    pass
 
 
 def get_record(domain_string: str, record_type: str) -> Optional[any]:
