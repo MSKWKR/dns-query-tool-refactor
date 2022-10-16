@@ -11,3 +11,5 @@ tld~=0.12.6
 SQLAlchemy~=1.4.41
 SQLAlchemy-Utils~=0.38.3
 redis~=4.3.4
+
+click~=8.1.3
