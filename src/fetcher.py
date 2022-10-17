@@ -1,11 +1,14 @@
+import configparser
 import json
 from typing import Optional
 
+from azure.storage.blob import BlobServiceClient
 from sqlalchemy_utils import database_exists
 
 from src.model import models
 from src.model.utils import dictionary_value_to_bytes, result_decrypt
 from . import toolbox, dns_database, dns_cache_pool, dns_database_url
+from src.utils.log.log import exception, LOGGER
 
 
 def get_records(domain_string: str) -> dict:
@@ -61,10 +64,6 @@ def get_records(domain_string: str) -> dict:
     return cached_result
 
 
-def get_human_readable_records(domain_string: str) -> dict:
-    pass
-
-
 def get_record(domain_string: str, record_type: str) -> Optional[any]:
     """
     Get the specific record from the results with the given type
@@ -87,18 +86,32 @@ def get_record(domain_string: str, record_type: str) -> Optional[any]:
         return record_value
 
 
+# @exception(LOGGER)
 def get_record_to_json(domain_string: str, file_name: str):
     """
-    Function to dump all the fetched result to a json file
+    Function to dump all the fetched result to a json file on Azure
 
 
     :param domain_string: Domain to check
+    :type: str
 
     :param file_name: The file name
+    :type: str
 
     :return:
     """
-    result = get_records(domain_string=domain_string)
+    result = json.dumps(get_records(domain_string=domain_string))
 
-    with open(f"../{file_name}.json", "w", encoding="utf-8") as file:
-        json.dump(result, file)
+    # Parse ini file
+    parser = configparser.ConfigParser()
+    parser.read('../config.ini')
+
+    # Connect to Azure Blob Service
+    # blob_storage_connection_string = parser['Azure Blob']['connection_string']
+    blob_storage_connection_string = "DefaultEndpointsProtocol=https;AccountName=dnstoolstorage;AccountKey=8La4GqH2nqftrNHqUfjwfCUZGfNy5FtNjOARAZEo8+xK5DLbxGhWBvgBz5I0wny1Q8APdDvWiyKf+AStsFo8gQ==;EndpointSuffix=core.windows.net"
+
+    blob_service_client = BlobServiceClient.from_connection_string(blob_storage_connection_string)
+
+    # Connect to file within container
+    blob_client = blob_service_client.get_blob_client(container="dnsfiles", blob=f"{file_name}.json")
+    blob_client.upload_blob(result, overwrite=True)
