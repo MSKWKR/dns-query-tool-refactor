@@ -6,8 +6,9 @@ RUN mkdir -p /Project_DNS/DNS_engine
 
 
 # Install all required packages
-COPY requirements.txt /Project_DNS/DNS_engine/
-RUN pip install --no-cache-dir -r requirments.txt
+COPY ./requirements.txt /Project_DNS/DNS_engine/requirements.txt
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r /Project_DNS/DNS_engine/requirements.txt
 
 # Copy all files from current working directory to the created WORKDIR
 COPY ./ /Project_DNS/DNS_engine
@@ -18,7 +19,7 @@ WORKDIR /Project_DNS/DNS_engine
 ENV PYTHONBUFFERED=1
 
 # Activate Virtual Environment
-ENV VIRTUAL_ENV=/DNS_engine/venv
+ENV VIRTUAL_ENV=/Project_DNS/DNS_engine/venv
 ENV PATH="/DNS_engine/venv/bin:$PATH"
 
 # Run the docker image
