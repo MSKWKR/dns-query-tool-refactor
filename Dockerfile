@@ -1,5 +1,5 @@
 FROM python:3.10-alpine3.16
-MAINTAINER freedom.systems
+LABEL maintainer=freedom.systems
 
 # Create working directory
 RUN mkdir -p /Project_DNS/DNS_engine
@@ -23,5 +23,10 @@ ENV VIRTUAL_ENV=/Project_DNS/DNS_engine/venv
 ENV PATH="/DNS_engine/venv/bin:$PATH"
 
 # Run the docker image
-CMD ["python3", "dnsengine.py"]
+ENTRYPOINT ["python3", "dnsengine.py"]
+
+# Add allowed command tags
+CMD ["-t", "--help"]
+
+
 
