@@ -18,7 +18,7 @@ class BlackListChecker:
 
         self.config = configparser.ConfigParser()
         # we don't have to close the opened .ini file, configparser took care of that
-        self.config.read('apikeys.ini')
+        self.config.read('../apikeys.ini')
 
     # Python Domain Name System Blacklists
     @exception(LOGGER)
