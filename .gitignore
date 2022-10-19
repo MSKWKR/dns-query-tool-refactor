@@ -4,3 +4,4 @@ __pycache__/
 .$DNS_tool_flow.drawio.bkp
 execution_log.log
 *.DS_Store
+domain_record.db

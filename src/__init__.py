@@ -14,7 +14,7 @@ LOGGER.log(level=logging.INFO,
 
 # Database Information
 sqlite_file_name = "domain_record.db"
-dns_database_url = f"sqlite:///../{sqlite_file_name}"
+dns_database_url = f"sqlite:///{sqlite_file_name}"
 
 # Cacher Server Information
 dns_cache_server_info = {
