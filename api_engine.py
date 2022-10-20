@@ -16,12 +16,12 @@ app.add_middleware(
 
 
 @app.get("/")
-def home():
+async def home():
     return {"message": "welcome to dnsengine"}
 
 
 @app.get("/results/{domain_name}")
-def search_dns_record(domain_name: str):
+async def search_dns_record(domain_name: str):
     result = get_records(domain_string=domain_name)
     # FastAPI automatically returns Content-Type: Application/json
     return result

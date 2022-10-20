@@ -1,9 +1,0 @@
-version: "3.7"
-
-services:
-  engine:
-    build: .
-    # Mounts the code inside the container, allow to modify the code on the fly
-    volumes:
-      - .:/Project_DNS/DNS_engine
-
