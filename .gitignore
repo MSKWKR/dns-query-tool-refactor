@@ -5,3 +5,4 @@ __pycache__/
 execution_log.log
 *.DS_Store
 domain_record.db
+apikeys.ini

@@ -22,11 +22,8 @@ ENV PYTHONBUFFERED=1
 ENV VIRTUAL_ENV=/Project_DNS/DNS_engine/venv
 ENV PATH="/DNS_engine/venv/bin:$PATH"
 
-# Run the docker image
-ENTRYPOINT ["python3", "dnsengine.py"]
 
-# Add allowed command tags
-CMD ["-t", "--help"]
+CMD ["uvicorn", "api_engine:app", "--host", "0.0.0.0", "--port", "80"]
 
 
 
