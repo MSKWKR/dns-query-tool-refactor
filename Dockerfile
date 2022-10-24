@@ -15,15 +15,9 @@ COPY ./ /Project_DNS/DNS_engine
 
 WORKDIR /Project_DNS/DNS_engine
 
-# Make sure all messages reach console
-ENV PYTHONBUFFERED=1
+EXPOSE 8000
 
-# Activate Virtual Environment
-ENV VIRTUAL_ENV=/Project_DNS/DNS_engine/venv
-ENV PATH="/DNS_engine/venv/bin:$PATH"
-
-
-CMD ["uvicorn", "api_engine:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "api_engine:app"]
 
 
 
