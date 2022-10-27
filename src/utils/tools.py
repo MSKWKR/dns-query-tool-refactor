@@ -5,7 +5,6 @@ import http.client
 import re
 import socket
 import time
-from pprint import pprint
 from typing import Optional, List
 from urllib.parse import urlparse
 
@@ -616,7 +615,7 @@ class DNSToolBox:
             registrar = executor.submit(self.registrar).result()
             expiration_date = executor.submit(self.expiration_date).result()
             email_exchange_service = executor.submit(self.email_provider).result()
-            srv_record = executor.submit(self.srv).result()
+            # srv_record = executor.submit(self.srv).result()
             o365_record = executor.submit(self.o365_results).result()
             has_https = executor.submit(self.has_https).result()
             is_blacklisted = executor.submit(self.is_black_listed).result()
@@ -639,7 +638,7 @@ class DNSToolBox:
             "registrar": registrar,
             "expiration_date": expiration_date,
             "email_exchange_service": email_exchange_service,
-            "srv": srv_record,
+            "srv": None,  # srv_record,
             "o365": o365_record,
             "has_https": has_https,
             "is_blacklisted": is_blacklisted
