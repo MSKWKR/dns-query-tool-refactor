@@ -456,32 +456,34 @@ class DNSToolBox:
         :rtype: dict
         """
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            srv_udp_result = executor.submit(self.get_srv_results, "udp").result()
-            srv_tcp_result = executor.submit(self.get_srv_results, "tcp").result()
-            srv_tls_result = executor.submit(self.get_srv_results, "tls").result()
+        # with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        #     srv_udp_result = executor.submit(self.get_srv_results, "udp").result()
+        #     srv_tcp_result = executor.submit(self.get_srv_results, "tcp").result()
+        #     srv_tls_result = executor.submit(self.get_srv_results, "tls").result()
+        # 
+        # srv_result_dict = {
+        #     "UDP": srv_udp_result,
+        #     "TCP": srv_tcp_result,
+        #     "TLS": srv_tls_result
+        # }
 
-        srv_result_dict = {
-            "UDP": srv_udp_result,
-            "TCP": srv_tcp_result,
-            "TLS": srv_tls_result
-        }
+        # return srv_result_dict
 
-        return srv_result_dict
+        return None
 
     @exception(LOGGER)
     def xfr(self) -> List[str]:
         xfr_list = []
-        try:
-            soa_answer = self.search("soa")
-            if soa_answer:
-                master_answer = dns.resolver.resolve(soa_answer[0].mname, "A")
-                zone = dns.zone.from_xfr(dns.query.xfr(master_answer[0].address, self._domain_string))
-                for n in sorted(zone.nodes.keys()):
-                    xfr_list.append(zone[n].to_text(n))
-        except ToolBoxErrors as error:
-            LOGGER.exception(msg=f"DNS XFR Record Error: {error}")
-            # print(f"{error=}")
+        # try:
+        #     soa_answer = self.search("soa")
+        #     if soa_answer:
+        #         master_answer = dns.resolver.resolve(soa_answer[0].mname, "A")
+        #         zone = dns.zone.from_xfr(dns.query.xfr(master_answer[0].address, self._domain_string))
+        #         for n in sorted(zone.nodes.keys()):
+        #             xfr_list.append(zone[n].to_text(n))
+        # except ToolBoxErrors as error:
+        #     LOGGER.exception(msg=f"DNS XFR Record Error: {error}")
+        #     # print(f"{error=}")
 
         return xfr_list
 
