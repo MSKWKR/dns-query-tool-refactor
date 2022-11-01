@@ -145,7 +145,7 @@ class DNSToolBox:
         return None
 
     @exception(LOGGER)
-    def search_whois(self) -> any:
+    def search_whois(self) -> Optional[any]:
         """
         Query a WHOIS server directly and return the parsed whois data.
 
@@ -264,7 +264,7 @@ class DNSToolBox:
         return srv_result_list
 
     @exception(LOGGER)
-    def get_result(self, record_type: str) -> str | List[str]:
+    def get_result(self, record_type: str) -> Optional[str] | Optional[List[str]]:
         """
         Function for getting the asked Record Type.
         Can accept input Record type 'A', 'AAAA', 'NS', 'MX', 'TXT', 'SOA', 'WWW' with its upper and lower cases.
@@ -303,7 +303,7 @@ class DNSToolBox:
                 if answers:
                     for answer in answers:
                         txt_result.append(str(answer))
-                return txt_result
+                return txt_result if len(txt_result) > 0 else None
 
             case "NS":
                 answers = self.search(record_type)
@@ -312,7 +312,7 @@ class DNSToolBox:
                     for answer in answers:
                         ns = self.strip_last_dot(answer.target.to_text())
                         ns_result.append(ns)
-                return ns_result
+                return ns_result if len(ns_result) > 0 else None
 
             case ("IPV4" | "IPV6"):
                 a_request_type = "A" if record_type == "IPV4" else "AAAA"
@@ -332,11 +332,11 @@ class DNSToolBox:
                     except ToolBoxErrors as error:
                         LOGGER.exception(msg=f"DNS Record Error: {error}")
                         # print(f"{error=}")
-                return ip_list
+                return ip_list if len(ip_list) > 0 else None
 
             case "WWW":
                 answers = self.search_www()
-                return f"www.{self._domain_string}" if answers else ""
+                return f"www.{self._domain_string}" if answers else None
 
             case _:
                 raise NameError(f"Record Type Input Error: {record_type}")
@@ -405,12 +405,11 @@ class DNSToolBox:
                 case "sipdir" | "sipfed":
                     o365_results_dict["SRV"].append(o365_result)
 
-        return o365_results_dict
+        return None if o365_results_dict == {'CNAME': ['', '', ''], 'MX': [''], 'SPF': [''],
+                                             'SRV': ['', '']} else o365_results_dict
 
-    # Since the tool wants the specific field for the ASN,
-    # this is dirty code that I didn't change much
     @exception(LOGGER)
-    def asn(self) -> dict[str:List[str]]:
+    def asn(self) -> dict[str:List[str]] | None:
         """
         Function for reading the ASN result parsed from search_ipwhois_asn(),
         will leave all the fields empty if the ip list is empty
@@ -445,7 +444,11 @@ class DNSToolBox:
         asn_dict['registry_list'] = registry_list
         asn_dict['description_list'] = description_list
 
-        return asn_dict
+        for key in asn_dict:
+            if len(asn_dict[key]) != 0:
+                return asn_dict
+
+        return None
 
     @exception(LOGGER)
     def srv(self) -> dict[str: List[str]]:
@@ -472,7 +475,7 @@ class DNSToolBox:
         return None
 
     @exception(LOGGER)
-    def xfr(self) -> List[str]:
+    def xfr(self) -> Optional[List[str]]:
         xfr_list = []
         # try:
         #     soa_answer = self.search("soa")
@@ -485,7 +488,7 @@ class DNSToolBox:
         #     LOGGER.exception(msg=f"DNS XFR Record Error: {error}")
         #     # print(f"{error=}")
 
-        return xfr_list
+        return xfr_list if len(xfr_list) > 0 else None
 
     @exception(LOGGER)
     def ptr(self) -> str:
@@ -588,13 +591,16 @@ class DNSToolBox:
 
     #  ------------------- Output to dict ----------------------------------------
     @property
-    def domain_info(self) -> dict:
+    def domain_info(self) -> dict | None:
         """
         Property domain_info is the fetched result for the given domain.
 
         :return: The dictionary result of the search result
         :rtype: dict
         """
+        if not self._domain_string:
+            return None
+
         # Update check_time every search -> format: 2013-09-18 11:16:32
         self.check_time = str(datetime.datetime.now(pytz.timezone("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S"))
         start_time = time.perf_counter()
