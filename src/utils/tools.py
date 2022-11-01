@@ -491,7 +491,7 @@ class DNSToolBox:
         return xfr_list if len(xfr_list) > 0 else None
 
     @exception(LOGGER)
-    def ptr(self) -> str:
+    def ptr(self) -> Optional[str]:
         """
         Util function for getting the ptr record using reverse query
 
@@ -503,13 +503,13 @@ class DNSToolBox:
         except ToolBoxErrors as error:
             LOGGER.exception(msg=f"DNS PTR Record Error: {error}")
             # print(f"{error=}")
-            return ""
+            return None
 
     # --------------------- whois details ----------------------
     # ["expiration_date", "registrar"]
     # not testing the following code since it's merely getting fields from the whois result
     @exception(LOGGER)
-    def expiration_date(self) -> str:
+    def expiration_date(self) -> Optional[str]:
         """
         Util for getting the expiration date for the searched domain
 
@@ -518,11 +518,11 @@ class DNSToolBox:
         """
         whois_result = self.search_whois()
         if whois_result:
-            return str(whois_result["expiration_date"])
-        return ""
+            return whois_result["expiration_date"].strftime("%Y-%m-%d %H:%M:%S")
+        return None
 
     @exception(LOGGER)
-    def registrar(self) -> str:
+    def registrar(self) -> Optional[str]:
         """
         Util for getting the registrar for the searched domain
 
@@ -532,11 +532,11 @@ class DNSToolBox:
         whois_result = self.search_whois()
         if whois_result:
             return whois_result["registrar"]
-        return ""
+        return None
 
     # ---------------------- Email Provider ------------------------
     @exception(LOGGER)
-    def email_provider(self) -> str:
+    def email_provider(self) -> Optional[str]:
         mx_record = self.get_result("mx")
         if len(mx_record) != 0:
             # check if the smtp domain name is within the mx string
@@ -544,7 +544,7 @@ class DNSToolBox:
                 if domain in mx_record:
                     return EMAIL_TABLE[domain]
 
-        return ""
+        return None
 
     # ------------------------------------------- Comparison --------------------------------------------------
     # check 'oldfunshinymelody.neverssl.com' for None SSL
