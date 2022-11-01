@@ -547,7 +547,6 @@ class DNSToolBox:
         return None
 
     # ------------------------------------------- Comparison --------------------------------------------------
-    # check 'oldfunshinymelody.neverssl.com' for None SSL
     @exception(LOGGER)
     def has_https(self) -> bool:
         """
