@@ -30,7 +30,6 @@ def get_records(domain_string: str, want_srv: bool = False) -> dict:
         if not dns_database.domain_name_exists(domain_name=domain_string) or not dns_database.domain_record_exists(
                 domain_name=domain_string) or dns_database.record_timeout(domain_name=domain_string) or \
                 (want_srv and cached_result["srv"] is None):
-            print("Got here")
             # Search with toolbox
             domain = models.to_domain(domain_string)
             toolbox_search_result = dictionary_value_to_bytes(toolbox.domain_info(want_srv=want_srv))
@@ -47,7 +46,6 @@ def get_records(domain_string: str, want_srv: bool = False) -> dict:
             cached_result = dns_cache_pool.get_value(key=domain_string)
 
         else:
-            print("this there")
             # Read from database
             database_result = dns_database.read_data_from_domain_name(domain_name=domain_string)
 
