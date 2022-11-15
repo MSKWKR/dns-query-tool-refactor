@@ -282,7 +282,7 @@ class DNSToolBox:
             case ("A" | "AAAA" | "SOA" | "MX"):
                 answers = self.search(record_type)
 
-                result = ""
+                result = None
                 if answers:
                     # answers is an iterator of type records, need to loop through in order to get the data
                     for answer in answers:
@@ -292,7 +292,7 @@ class DNSToolBox:
                             # return an empty result if the given answer is incorrect
                             LOGGER.exception(msg=f"DNS Record Invalid: {result}")
                             # print(f"Incorrect result: {result}")
-                            return ""
+                            return result
                         return result
                 else:
                     return result
