@@ -13,11 +13,11 @@ import dns.resolver
 import dns.zone
 import pytz as pytz
 import tld
-import whois
 from ipwhois.asn import IPASN
 from ipwhois.net import Net
 
 from src.utils.log.log import exception, LOGGER
+from . import whois_comparison
 from .blacklist_checker import BlackListChecker
 from .constants import EMAIL_TABLE, SRV_LIST
 from .valid_result import Validator
@@ -144,22 +144,22 @@ class DNSToolBox:
             # print(f"{error=}")
         return None
 
-    @exception(LOGGER)
-    def search_whois(self) -> Optional[any]:
-        """
-        Query a WHOIS server directly and return the parsed whois data.
-
-        :return: The result for parsing the WHOIS data, None if not found
-        :rtype whois.parser.WhoisTw, None
-        """
-        try:
-            whois_result = whois.whois(self._domain_string)
-            return whois_result
-        # Handle TypeError by returning None
-        except ToolBoxErrors as error:
-            LOGGER.exception(msg=f"DNS Record Error: {error}")
-            # print(f"{error=}")
-            return None
+    # @exception(LOGGER)
+    # def search_whois(self) -> Optional[any]:
+    #     """
+    #     Query a WHOIS server directly and return the parsed whois data.
+    #
+    #     :return: The result for parsing the WHOIS data, None if not found
+    #     :rtype whois.parser.WhoisTw, None
+    #     """
+    #     try:
+    #         whois_result = whois.whois(self._domain_string)
+    #         return whois_result
+    #     # Handle TypeError by returning None
+    #     except ToolBoxErrors as error:
+    #         LOGGER.exception(msg=f"DNS Record Error: {error}")
+    #         # print(f"{error=}")
+    #         return None
 
     @classmethod
     @exception(LOGGER)
@@ -516,9 +516,9 @@ class DNSToolBox:
         :return: The string format for the expiration date
         :rtype: str
         """
-        whois_result = self.search_whois()
+        whois_result = whois_comparison.whois_api(self._domain_string)
         if whois_result:
-            return whois_result["expiration_date"].strftime("%Y-%m-%d %H:%M:%S")
+            return whois_result['WhoisRecord']['registryData']['expiresDate']
         return None
 
     @exception(LOGGER)
@@ -529,9 +529,9 @@ class DNSToolBox:
         :return: The DNS registrar
         :rtype: str
         """
-        whois_result = self.search_whois()
+        whois_result = whois_comparison.whois_api(self._domain_string)
         if whois_result:
-            return whois_result["registrar"]
+            return whois_result['WhoisRecord']['registrarName']
         return None
 
     # ---------------------- Email Provider ------------------------

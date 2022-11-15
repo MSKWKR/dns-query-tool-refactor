@@ -15,7 +15,7 @@ def ip2_whois(domain: str) -> Optional[str]:
     query_string = {"key": {ip2_api_key}, "domain": {domain}}
     response = requests.get(ip2_whois_url, params=query_string)
     if response.status_code == 200:
-        return response.text
+        return response.json()
 
 
 def whois_lookup(domain: str) -> Optional[str]:
@@ -42,7 +42,7 @@ def whois_api(domain) -> Optional[str]:
     response = requests.get(url, params=query_string)
 
     if response.status_code == 200:
-        return response.text
+        return response.json()
 
 
 def dns_lookup_api(domain) -> Optional[str]:
@@ -67,11 +67,11 @@ def whois_reputation(domain) -> Optional[str]:
 
 def main():
     domain = "freedom.net.tw"
-    pprint(ip2_whois(domain))
-    pprint(whois_lookup(domain))
-    pprint(dns_lookup_api(domain))
+    # pprint(ip2_whois(domain))
+    # pprint(whois_lookup(domain))
+    # pprint(dns_lookup_api(domain))
     pprint(whois_api(domain))
-    pprint(whois_reputation(domain))
+    # pprint(whois_reputation(domain))
 
 
 if __name__ == "__main__":
