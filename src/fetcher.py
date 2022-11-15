@@ -1,17 +1,15 @@
-import configparser
-import json
 from typing import Optional
 
-from azure.storage.blob import BlobServiceClient
 from sqlalchemy_utils import database_exists
 
 from src.model import models
 from src.model.utils import dictionary_value_to_bytes, result_decrypt
-from . import toolbox, dns_database, dns_cache_pool, dns_database_url
 from src.utils.log.log import exception, LOGGER
+from . import toolbox, dns_database, dns_cache_pool, dns_database_url
 
 
-def get_records(domain_string: str) -> dict:
+@exception(LOGGER)
+def get_records(domain_string: str, want_srv: bool = False) -> dict:
     """
     Function that integrates all toolbox, database and caching logic. Get record for the needing domain
 
@@ -24,14 +22,18 @@ def get_records(domain_string: str) -> dict:
         dns_database.create_database_and_tables()
 
     cached_result = dns_cache_pool.get_value(key=domain_string)
-    if not cached_result:
+    # Ultimately return the cached result
+    result_decrypt(cached_result)
+
+    if not cached_result or (want_srv and cached_result["srv"] is None):
         # Check if it's in the database, if not in or timeout then search with DNSToolBox
         if not dns_database.domain_name_exists(domain_name=domain_string) or not dns_database.domain_record_exists(
-                domain_name=domain_string) or dns_database.record_timeout(domain_name=domain_string):
-
+                domain_name=domain_string) or dns_database.record_timeout(domain_name=domain_string) or \
+                (want_srv and cached_result["srv"] is None):
+            print("Got here")
             # Search with toolbox
             domain = models.to_domain(domain_string)
-            toolbox_search_result = dictionary_value_to_bytes(toolbox.domain_info)
+            toolbox_search_result = dictionary_value_to_bytes(toolbox.domain_info(want_srv=want_srv))
             dns_record = models.to_DNS_record(toolbox_search_result)
 
             # Add to database
@@ -45,6 +47,7 @@ def get_records(domain_string: str) -> dict:
             cached_result = dns_cache_pool.get_value(key=domain_string)
 
         else:
+            print("this there")
             # Read from database
             database_result = dns_database.read_data_from_domain_name(domain_name=domain_string)
 
@@ -57,10 +60,8 @@ def get_records(domain_string: str) -> dict:
             # Return Result
             cached_result = dns_cache_pool.get_value(key=domain_string)
 
-    # Ultimately return the cached result
-    result_decrypt(cached_result)
-    # cached_result = json.dumps(cached_result)
-    # print(type(cached_result))
+        # Ultimately return the cached result
+        result_decrypt(cached_result)
     return cached_result
 
 
@@ -84,34 +85,3 @@ def get_record(domain_string: str, record_type: str) -> Optional[any]:
     else:
         record_value = data[record_type]
         return record_value
-
-
-# @exception(LOGGER)
-def get_record_to_json(domain_string: str, file_name: str):
-    """
-    Function to dump all the fetched result to a json file on Azure
-
-
-    :param domain_string: Domain to check
-    :type: str
-
-    :param file_name: The file name
-    :type: str
-
-    :return:
-    """
-    result = json.dumps(get_records(domain_string=domain_string))
-
-    # Parse ini file
-    parser = configparser.ConfigParser()
-    parser.read('../config.ini')
-
-    # Connect to Azure Blob Service
-    # blob_storage_connection_string = parser['Azure Blob']['connection_string']
-    blob_storage_connection_string = "DefaultEndpointsProtocol=https;AccountName=dnstoolstorage;AccountKey=8La4GqH2nqftrNHqUfjwfCUZGfNy5FtNjOARAZEo8+xK5DLbxGhWBvgBz5I0wny1Q8APdDvWiyKf+AStsFo8gQ==;EndpointSuffix=core.windows.net"
-
-    blob_service_client = BlobServiceClient.from_connection_string(blob_storage_connection_string)
-
-    # Connect to file within container
-    blob_client = blob_service_client.get_blob_client(container="dnsfiles", blob=f"{file_name}.json")
-    blob_client.upload_blob(result, overwrite=True)

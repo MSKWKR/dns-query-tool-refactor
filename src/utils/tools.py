@@ -459,20 +459,18 @@ class DNSToolBox:
         :rtype: dict
         """
 
-        # with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        #     srv_udp_result = executor.submit(self.get_srv_results, "udp").result()
-        #     srv_tcp_result = executor.submit(self.get_srv_results, "tcp").result()
-        #     srv_tls_result = executor.submit(self.get_srv_results, "tls").result()
-        # 
-        # srv_result_dict = {
-        #     "UDP": srv_udp_result,
-        #     "TCP": srv_tcp_result,
-        #     "TLS": srv_tls_result
-        # }
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            srv_udp_result = executor.submit(self.get_srv_results, "udp").result()
+            srv_tcp_result = executor.submit(self.get_srv_results, "tcp").result()
+            srv_tls_result = executor.submit(self.get_srv_results, "tls").result()
 
-        # return srv_result_dict
+        srv_result_dict = {
+            "UDP": srv_udp_result,
+            "TCP": srv_tcp_result,
+            "TLS": srv_tls_result
+        }
 
-        return None
+        return srv_result_dict
 
     @exception(LOGGER)
     def xfr(self) -> Optional[List[str]]:
@@ -589,8 +587,7 @@ class DNSToolBox:
         return self._black_list_checker.is_black_listed(self._domain_string)
 
     #  ------------------- Output to dict ----------------------------------------
-    @property
-    def domain_info(self) -> dict | None:
+    def domain_info(self, want_srv: bool = False) -> dict | None:
         """
         Property domain_info is the fetched result for the given domain.
 
@@ -622,7 +619,8 @@ class DNSToolBox:
             registrar = executor.submit(self.registrar).result()
             expiration_date = executor.submit(self.expiration_date).result()
             email_exchange_service = executor.submit(self.email_provider).result()
-            # srv_record = executor.submit(self.srv).result()
+
+            srv_record = executor.submit(self.srv).result() if want_srv else None
             o365_record = executor.submit(self.o365_results).result()
             has_https = executor.submit(self.has_https).result()
             is_blacklisted = executor.submit(self.is_black_listed).result()
@@ -645,7 +643,7 @@ class DNSToolBox:
             "registrar": registrar,
             "expiration_date": expiration_date,
             "email_exchange_service": email_exchange_service,
-            "srv": None,  # srv_record,
+            "srv": srv_record,
             "o365": o365_record,
             "has_https": has_https,
             "is_blacklisted": is_blacklisted
